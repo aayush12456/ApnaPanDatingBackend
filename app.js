@@ -6,8 +6,10 @@ const db = require('./src/db/db');
 const userRoutes = require('./src/routes/authRoutes');
 const path = require('path');
 const cors = require("cors");
+const socketCon = require('./socket');
 const app = express();
 const server = http.createServer(app);
+
 const corsOptions = {
     // origin: 'http://192.168.29.169:8081',
     origin: '*',
@@ -31,3 +33,40 @@ server.listen(port, '0.0.0.0', () => {
         console.log(`ngrok connection not there ${error}`)
     })
 });
+const io = require('socket.io')(server, {
+    cors: {
+        origin: '*', // or your frontend URL
+        // origin: 'https://apnapandating.netlify.app',
+        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+        credentials: true,
+        pingTimeout:600000,
+        pingInerval:25000
+        // pingTimeout: 120000, // Reduced to 2 minutes
+        // pingInterval: 10000, // Reduced to 10 seconds
+    }
+});
+app.locals.io = io;
+socketCon.init(io);
+// Basic socket connection
+io.on('connection', (socket) => {
+    console.log('A new user connected with socket ID:', socket.id );
+     
+    // // Emit a connected message to the client
+    // socket.emit('connected', `Socket connected: ${socket.id}`);
+    // Handle disconnection
+    socket.on('addMatchUser',(message)=>{
+        io.emit('getMatchUser',message)
+    })
+
+    socket.on('addLikeCountUser',(count)=>{
+        io.emit('getLikeCountUser',count)
+    })
+    // socket.on('getloginId',(id)=>{
+    //     io.emit('getLoginId',id)
+    // })
+    socket.on('disconnect', (reason) => {
+        console.log('A user disconnected with socket ID:', socket.id,'reason is',reason);
+    });
+});
+
+module.exports = { io };
