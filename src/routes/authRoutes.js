@@ -24,4 +24,9 @@ router.post('/addLikeSmsText/:id', userController.addLikeSmsTextUser);
 router.post('/addLikeCount/:id', userController.addLikeCountUser);
 router.get('/getLikeCount/:id', userController.getLikeCountUser);
 router.post('/deleteLikeCount', userController.deleteCounterUser);
+router.post('/addLikeSkipUser/:id', userController.addLikeSkipUser); // means frontend me likes me jo aaya usko skip karna 
+router.get('/getLikeSkipUser/:id', userController.getLikeSkipUser);
+router.post('/addLikeMatchUser/:id', userController.addLikeMatchUser);
+router.get('/getLikeMatchUser/:id', userController.getLikeMatchUser);
+router.post('/addOnlineSkipUser/:id', userController.addOnlineSkipUser);
 module.exports = router;
