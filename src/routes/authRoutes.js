@@ -24,9 +24,19 @@ router.post('/addLikeSmsText/:id', userController.addLikeSmsTextUser);
 router.post('/addLikeCount/:id', userController.addLikeCountUser);
 router.get('/getLikeCount/:id', userController.getLikeCountUser);
 router.post('/deleteLikeCount', userController.deleteCounterUser);
-router.post('/addLikeSkipUser/:id', userController.addLikeSkipUser); // means frontend me likes me jo aaya usko skip karna 
-router.get('/getLikeSkipUser/:id', userController.getLikeSkipUser);
+router.post('/addCommonVisitorLikeSkipUser/:id', userController.addCommonVisitorLikeSkipUser); // means frontend me likes me jo aaya usko skip karna 
+router.get('/getCommonVisitorLikeSkipUser/:id', userController.getCommonVisitorLikeSkipUser);
 router.post('/addLikeMatchUser/:id', userController.addLikeMatchUser);
 router.get('/getLikeMatchUser/:id', userController.getLikeMatchUser);
 router.post('/addOnlineSkipUser/:id', userController.addOnlineSkipUser);
+router.post('/addOnlineLikeUser/:id', userController.addOnlineLikeUser);
+router.get('/getOnlineLikeUser/:id', userController.getOnlineLikeUser);
+router.post('/addVisitorUser/:id',userController.addVisitorUser)
+router.get('/getVisitorUser/:id', userController.getVisitorUser);
+router.post('/addVisitorCount/:id', userController.addVisitorCountUser);
+router.get('/getVisitorCount/:id', userController.getVisitorCountUser);
+router.post('/deleteVisitorCount', userController.deleteVisitorCounterUser);
+router.post('/addVisitorSendEmail/:id', userController.addVisitorSendEmailUser);
+router.post('/addVisitorLikeUser/:id', userController.addVisitorLikeUser);
+router.get('/getVisitorLikeUser/:id', userController.getVisitorLikeUser);
 module.exports = router;

@@ -61,14 +61,26 @@ io.on('connection', (socket) => {
     socket.on('addLikeCountUser',(count)=>{
         io.emit('getLikeCountUser',count)
     })
-    socket.on('addLikeSkipUser',(user)=>{
-        io.emit('getLikeSkipUser',user)
+    socket.on('addCommonVisitorLikeSkipUser',(user)=>{
+        io.emit('getCommonVisitorLikeSkipUser',user)
     })
     socket.on('addLikeMatchUser',(user)=>{
         io.emit('getLikeMatchUser',user)
     })
     socket.on('addOnlineSkipUser',(user)=>{
         io.emit('getOnlineSkipUser',user)
+    })
+    socket.on('addOnlineLikeUser',(user)=>{
+        io.emit('getOnlineLikeUser',user)
+    })
+    socket.on('addVisitorUser',(user)=>{
+        io.emit('getVisitorUser',user)
+    })
+    socket.on('addVisitorCountUser',(user)=>{
+        io.emit('getVisitorCountUser',user)
+    })
+    socket.on('addVisitorLikeUser',(user)=>{
+        io.emit('getVisitorLikeUser',user)
     })
     socket.on('disconnect', (reason) => {
         console.log('A user disconnected with socket ID:', socket.id,'reason is',reason);

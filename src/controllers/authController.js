@@ -190,11 +190,12 @@ exports.allUser = async (req, res) => {
 
       const city = user.city;
       const gender = user.gender;
-      // const visitors = user.visitors.map(visitor => visitor.visitorId.toString()); // Assuming visitors is an array of ObjectIds
-      // const likes = user.likes.map(like => like.toString());
+      const visitors = user.visitors.map(visitor => visitor.visitorId.toString()); // Assuming visitors is an array of ObjectIds
+      const likes = user.likes.map(like => like.toString());
       const onlineSkipUser=user.onlineSkipUser.map(onlineSkip=>onlineSkip.toString())
-      // const onlineLikeUser=user.onlineLikeUser.map(onlineLike=>onlineLike.toString())
+      const onlineLikeUser=user.onlineLikeUser.map(onlineLike=>onlineLike.toString())
       // const deactivatedUser=user.deactivatedIdArray.map(deactivateUser=>deactivateUser.toString())
+      const anotherMatchUser=user.anotherMatchUser.map(anotherMatch=>anotherMatch.toString())
       const users = await authUser.find();
 
       // Filter out users with the same city and opposite gender
@@ -207,11 +208,12 @@ exports.allUser = async (req, res) => {
       }
 
       // Remove users from filteredUsers if they are present in the visitors array
-      // filteredUsers = filteredUsers.filter(u => !visitors.includes(u._id.toString()));
-      // filteredUsers = filteredUsers.filter(u => !likes.includes(u._id.toString()));
+      filteredUsers = filteredUsers.filter(u => !visitors.includes(u._id.toString()));
+      filteredUsers = filteredUsers.filter(u => !likes.includes(u._id.toString()));
       filteredUsers = filteredUsers.filter(u => !onlineSkipUser.includes(u._id.toString()));
-      // filteredUsers = filteredUsers.filter(u => !onlineLikeUser.includes(u._id.toString()));
+      filteredUsers = filteredUsers.filter(u => !onlineLikeUser.includes(u._id.toString()));
       // filteredUsers = filteredUsers.filter(u => ! deactivatedUser.includes(u._id.toString()));
+      filteredUsers = filteredUsers.filter(u => !anotherMatchUser.includes(u._id.toString()));
       res.json({
           users: filteredUsers
       });
@@ -525,7 +527,7 @@ exports.deleteCounterUser = async (req, res) => {
     }
 };
 
-exports.addLikeSkipUser=async(req,res)=>{ // function to store login user id in a like user
+exports.addCommonVisitorLikeSkipUser=async(req,res)=>{ // function to store login user id in a like user
     try{
         const likeUserId=req.body.likeSkipUserId // like user id
         const loginId = req.params.id; // login user id
@@ -551,7 +553,7 @@ exports.addLikeSkipUser=async(req,res)=>{ // function to store login user id in 
     }
 }
 
-exports.getLikeSkipUser=async(req,res)=>{ // function to get data of like user
+exports.getCommonVisitorLikeSkipUser=async(req,res)=>{ // function to get data of like user
     try{
         const userId = req.params.id; // login user id
         const user = await authUser.findById(userId);
@@ -635,6 +637,62 @@ exports.addLikeMatchUser = async (req, res) => {
     }
 };
 
+// exports.addLikeMatchUser = async (req, res) => {
+//     try {
+//         const likeMatchId = req.body.likeMatchId; // like user id 
+//         const loginId = req.params.id; // login user id
+//         console.log(likeMatchId, 'matchPlusLike', loginId);
+
+//         const userObj = await authUser.findById(loginId);
+//         const anotherUserObj = await authUser.findById(likeMatchId);
+
+//         if (!userObj || !anotherUserObj) {
+//             return res.status(404).json({ mssg: "User not found" });
+//         }
+
+//         // Remove loginId from visitors and likeUser arrays in the database
+//         await authUser.updateOne(
+//             { _id: likeMatchId },
+//             {
+//                 $pull: {
+//                     visitors: { visitorId: loginId }, // Remove loginId from visitors
+//                     likeUser: loginId, // Remove loginId from likeUser
+//                 },
+//             }
+//         );
+
+//         // Add loginId to anotherMatchUser array if not already present
+//         if (!anotherUserObj.anotherMatchUser.includes(loginId)) {
+//             anotherUserObj.anotherMatchUser.push(loginId);
+//             await anotherUserObj.save();
+//         }
+
+//         // Add likeMatchId to userObj.matchUser array if not already present
+//         if (!userObj.matchUser.includes(likeMatchId)) {
+//             userObj.matchUser.push(likeMatchId);
+//             await userObj.save();
+//         }
+
+//         // Fetch matchUser details for response
+//         let matchLikeUserArray = await authUser.find({
+//             _id: { $in: userObj.matchUser },
+//         });
+
+//         let anotherMatchLikeUserArray = await authUser.find({
+//             _id: { $in: anotherUserObj.anotherMatchUser },
+//         });
+
+//         res.json({
+//             matchLikes: matchLikeUserArray,
+//             anotherMatchLikes: anotherMatchLikeUserArray,
+//         });
+
+//     } catch (error) {
+//         console.error(error);
+//         res.status(500).json({ mssg: "Internal server error" });
+//     }
+// };
+
 exports.getLikeMatchUser=async(req,res)=>{ // function to get data of like user
     try{
         const userId = req.params.id; // login user id
@@ -694,6 +752,399 @@ exports.addOnlineSkipUser=async(req,res)=>{ // function to store login user id i
              console.log('online person skip',onlinePersonSkipUser)
              res.json({onlineSkip:onlinePersonSkipUser})
 
+    }catch (error) {
+        console.error(error);
+        res.status(500).json({ mssg: "Internal server error" });
+    }
+}
+
+exports.addOnlineLikeUser=async(req,res)=>{ // function to store login user id in a like user
+    try{
+        const onlinePersonLikeUserId=req.body.onlinePersonLikeUserId // like user id
+        const loginUserId = req.params.id; // login user id
+        console.log(loginUserId, 'onlinePlusSkip',onlinePersonLikeUserId)
+        const userObj = await authUser.findById(loginUserId);
+        const anotherUserObj = await authUser.findById(onlinePersonLikeUserId)
+        if (!userObj) {
+                 return res.status(404).json({ mssg: "User not found" });
+             }
+             userObj.selfOnlineLikeUser.push(onlinePersonLikeUserId)
+             anotherUserObj.onlineLikeUser.push(loginUserId)
+            //  anotherUserObj.visitors = anotherUserObj.visitors.filter(anotherVisitor => anotherVisitor.visitorId !== loginUserId);
+             const onlinePersonLikeUser=await userObj.save()
+             const anotherOnlinePersonLikeUser=await anotherUserObj.save()
+             console.log('online person skip',onlinePersonLikeUser)
+
+             let onlineLikeUserArray
+             onlineLikeUserArray=await authUser.find({
+                _id: { $in:anotherOnlinePersonLikeUser.onlineLikeUser }
+            })
+
+            let selfOnlineLikeUserArray
+            selfOnlineLikeUserArray=await authUser.find({
+               _id: { $in:onlinePersonLikeUser.selfOnlineLikeUser }
+           })
+             res.json({onlineLikeUser:onlineLikeUserArray,selfOnlineLikeUser:selfOnlineLikeUserArray})
+
+    }catch (error) {
+        console.error(error);
+        res.status(500).json({ mssg: "Internal server error" });
+    }
+}
+
+exports.getOnlineLikeUser = async (req, res) => {
+    try {
+        const userId = req.params.id; // login user id
+        const user = await authUser.findById(userId);
+        
+        if (!user) {
+            return res.status(404).json({ mssg: "User not found" });
+        }
+        // const blockUserArray=user.blockUserArray
+        // const oppositeBlockUserArray=user.oppositeBlockUserArray
+
+        let onlineLikeUserArray
+         onlineLikeUserArray = user.onlineLikeUser;
+        //  onlineLikeUserArray=onlineLikeUserArray.filter(onlineLikeItem=>!blockUserArray.includes(onlineLikeItem._id.toString()))
+        //  onlineLikeUserArray=onlineLikeUserArray.filter(onlineLikeItem=>!oppositeBlockUserArray.includes(onlineLikeItem._id.toString()))
+
+        const onlineLikeUserData = await authUser.find({ _id: { $in: onlineLikeUserArray } });
+        
+        let selfOnlineLikeUserArray
+        selfOnlineLikeUserArray = user.selfOnlineLikeUser;
+        // selfOnlineLikeUserArray = selfOnlineLikeUserArray .filter(selfOnlineLikeItem=>!blockUserArray.includes(selfOnlineLikeItem._id.toString()))
+        // selfOnlineLikeUserArray = selfOnlineLikeUserArray .filter(selfOnlineLikeItem=>!oppositeBlockUserArray.includes(selfOnlineLikeItem._id.toString()))
+
+        const selfOnlineLikeUserData = await authUser.find({ _id: { $in: selfOnlineLikeUserArray } });
+
+        // Remove visitors that are also in selfOnlineLikeUserArray
+        // user.visitors = user.visitors.filter(visitor => 
+        //     !onlineLikeUserArray.includes(visitor.visitorId)
+        // );
+       
+        // const deactivateUserArray = user.deactivatedIdArray;
+        // const filteredOnlineLikeUserData = onlineLikeUserData.filter(user => {
+        //     return !deactivateUserArray.includes(user._id.toString());
+        // });
+        
+        // console.log('visitors of like User', user.visitors);
+
+        // Save the updated user object
+        await user.save();
+
+        res.json({ onlineLikeUser: onlineLikeUserData, selfOnlineLikeUser: selfOnlineLikeUserData });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ mssg: "Internal server error" });
+    }
+};
+
+
+exports.addVisitorUser = async (req, res) => {
+    try {
+        const personUserId = req.body.userId; // login user id
+        const visitorUserId = req.params.id; // visitor id
+        const userObj = await authUser.findById(personUserId);
+        
+        if (!userObj) {
+            return res.status(404).json({ mssg: "User not found" });
+        }
+        
+        // Check if the visitorId already exists in the visitors array
+        const visitorExists = userObj.visitors.some(visitor => visitor.visitorId.toString() === visitorUserId);
+
+        if (visitorExists) {
+            return res.status(400).json({ mssg: "Visitor already added" });
+        }
+
+        const visitorData = {
+            visitorId: visitorUserId,
+            visitedAt: new Date()
+        };
+        
+        userObj.visitors.push(visitorData);
+        const visitorsUser = await userObj.save();
+
+        let visitorUserArray
+        visitorUserArray=await authUser.find({
+           _id: { $in:visitorsUser.visitors }
+       })
+        res.json({ visitors: visitorUserArray });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ mssg: "Internal server error" });
+    }
+};
+
+
+const formatTimeDifference = (date) => {
+    const now = new Date();
+    const diffMs = now - date;
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHrs = Math.floor(diffMin / 60);
+    const diffDays = Math.floor(diffHrs / 24);
+
+    if (diffMin < 60) return `${diffMin} minutes ago`;
+    if (diffHrs < 24) return `${diffHrs} hours ago`;
+    if (diffHrs === 1) return `yesterday`;
+    
+    if (diffHrs > 28) {
+        // Format the date as 'Month Day, Year'
+        const options = { day: 'numeric', month: 'long', year: 'numeric' };
+        return date.toLocaleDateString('en-US', options);
+    }
+
+    return `${diffDays} days ago`;
+};
+
+// Example usage
+const visitDate = new Date('2024-06-08T10:00:00Z');
+console.log('format date', formatTimeDifference(visitDate));
+
+
+exports.getVisitorUser = async (req, res) => {
+    try {
+        const userId = req.params.id; // login user id
+        const user = await authUser.findById(userId);
+        
+        if (!user) {
+            return res.status(404).json({ mssg: "User not found" });
+        }
+        
+        const visitorUserArray = user.visitors.map(visitor => visitor.visitorId);
+        const getVisitors = await authUser.find({ _id: { $in: visitorUserArray } });
+
+        // Combine visitor details with the formatted time
+        let visitorsWithTime = user.visitors.map(visitor => {
+            const visitorInfo = getVisitors.find(u => u._id.toString() === visitor.visitorId.toString());
+            return {
+                visitor: visitorInfo,
+                visitedAt: formatTimeDifference(new Date(visitor.visitedAt))
+            };
+        });
+
+        // Filter out visitors who are in user.onlineLikeUser array
+        visitorsWithTime = visitorsWithTime.filter(visitorWithTime => {
+            return !user.onlineLikeUser.some(onlineLikeUserId => onlineLikeUserId.toString() === visitorWithTime.visitor._id.toString());
+        });
+        // visitorsWithTime = visitorsWithTime.filter(visitorWithTime => {
+        //     return !user.deactivatedIdArray.some(deactivateUserId => deactivateUserId.toString() === visitorWithTime.visitor._id.toString());
+        // });
+        // visitorsWithTime = visitorsWithTime.filter(visitorWithTime => {
+        //     return !user.blockUserArray.some(blockUserId => blockUserId.toString() === visitorWithTime.visitor._id.toString())
+        // });
+        // visitorsWithTime = visitorsWithTime.filter(visitorWithTime => {
+        //     return !user.oppositeBlockUserArray.some(oppositeBlockUserId => oppositeBlockUserId.toString() === visitorWithTime.visitor._id.toString())
+        // });
+        res.json({ visitors: visitorsWithTime });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ mssg: "Internal server error" });
+    }
+};
+
+
+exports.addVisitorCountUser = async (req, res) => {
+    try {
+      const id = req.params.id;
+      const userId=req.body.visitorOnlineId
+      const userObj = await authUser.findById(userId);
+      // console.log('user data obj',userObj)
+      if (userObj) {
+        userObj.visitorCounter = userObj.visitorCounter ? userObj.visitorCounter + 1 : 1; // Incrementing the counter value
+        await userObj.save(); // Saving the updated userObj
+      //   io.emit('new counter', { userId: userId, counter: userObj.counter });
+        console.log('Updated userObj:', userObj);
+        res.status(200).send({ message: 'visitor Counter incremented successfully', userObj:userObj });
+      } 
+   
+      else {
+        
+        res.status(404).send({ message: 'User not found' });
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      res.status(500).send({ message: 'Internal server error' });
+    }
+  };
+// exports.addVisitorCountUser = async (req, res) => {
+//     try {
+//       const id = req.params.id; // Not used in the current logic, remove if unnecessary
+//       const userId = req.body.visitorOnlineId;
+//       const userObj = await authUser.findById(userId);
+  
+//       if (userObj) {
+//         const isVisitorInAnotherMatch = userObj.visitors.some(visitorId =>
+//           userObj.anotherMatchUser.includes(visitorId)
+//         );
+  
+//         if (!isVisitorInAnotherMatch) {
+//           userObj.visitorCounter = userObj.visitorCounter ? userObj.visitorCounter + 1 : 1; // Incrementing the counter
+//           await userObj.save(); // Save updated userObj
+//           io.emit('new counter', { userId: userId, counter: userObj.visitorCounter });
+//           console.log('Updated userObj:', userObj);
+  
+//           res.status(200).send({
+//             message: 'Visitor counter incremented successfully',
+//             userObj: userObj,
+//           });
+//         } else {
+//           res.status(200).send({
+//             message: 'Visitor is in anotherMatchUser array, counter not incremented',
+//           });
+//         }
+//       } else {
+//         res.status(404).send({ message: 'User not found' });
+//       }
+//     } catch (error) {
+//       console.error('Error:', error);
+//       res.status(500).send({ message: 'Internal server error' });
+//     }
+//   };
+  
+
+  
+  exports.getVisitorCountUser=async(req,res)=>{
+    try{
+        const userId = req.params.id; 
+        const user = await authUser.findById(userId);
+        console.log('get visitor count user is',user.visitorCounter)
+        res.json({userObj:user });
+     
+    } catch (error) {
+    console.error('Error:', error);
+    res.status(500).send({ message: 'Internal server error' });
+  }
+}
+
+exports.deleteVisitorCounterUser = async (req, res) => {
+    try {
+        const userId = req.body.loginId;
+        const user = await authUser.findById(userId);
+        console.log('user id in visitor count',userId)
+        
+        if (user) {
+            // Delete the counter property from the user object
+            user.visitorCounter = null; // or delete user.counter;
+
+            // Save the updated user object
+            await user.save();
+           
+            console.log('visitor Counter deleted for user:', user);
+            const io = req.app.locals.io;
+            io.emit('deleteVisitorCount', user.visitorCounter);
+         
+            res.status(200).send({ message: 'visitor Counter deleted successfully', userObj:user });
+        } else {
+            res.status(404).send({ message: 'User not found' });
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).send({ message: 'Internal server error' });
+    }
+};
+
+exports.addVisitorSendEmailUser = async (req, res) => {
+    try {
+        const senderEmailId = req.body.recieverEmailId; // like user id
+        const loginEmailId = req.params.id; // login user id
+        console.log(senderEmailId, 'sender id', loginEmailId);
+
+        const userObj = await authUser.findById(senderEmailId);
+        console.log('sender user obj is', userObj);
+
+        const likeUserObj = await authUser.findById(loginEmailId);
+        const userObjSendMail = userObj.visitors.some(visitor => visitor.visitorId.toString() === loginEmailId.toString());
+        if (userObjSendMail) {
+            return res.status(200).json({ message: 'Email not sent as the visitor already exists.' });
+          }
+      
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: 'apnapan96@gmail.com',
+                pass: 'nmhlhhjvahmjqmlz'
+            }
+        });
+
+        // Set up email options
+        const mailOptions = {
+            from: 'apnapan96@gmail.com',
+            to: userObj.email,
+            subject: `Hey ${userObj.firstName} - there was a new visitor on your profile. Check them out`,
+            html: `<h1 style="text-Align:center; font-size:30px;font-weight:bold">ApnaPan</h1>
+            <hr style="color:grey;"/>
+            <p style="padding-top:1rem;font-size:1.2rem">Hi ${userObj.firstName},</p>
+            <p style="font-weight:bold; padding-top:1rem;font-size:1.2rem;color:black">${likeUserObj.firstName} <span style="font-weight:normal;">visited you / browse through your profile.Go check it out</span></p>
+            <div style='display:flex;justify-content:center;margin-top:4rem'>
+            <a href="https://apnapandating.netlify.app/" style="text-decoration:none;"> <button type='btn' style="background-color:green;font-size:17px;font-weight:bold;color:white;height:45px;width:18rem;border-radius:25px;cursor:pointer" >See your visitors</button></a>
+            </div>`
+        };
+
+        // Send the email
+        const result = await transporter.sendMail(mailOptions);
+        console.log('Email sent: ', result);
+        res.status(200).json({ mssg: "Email sent successfully" ,result:result});
+
+    } catch (error) {
+        console.error('Error sending Email:', error);
+    }
+};
+
+exports.addVisitorLikeUser=async(req,res)=>{ // function to store login user id in a like user
+    try{
+        const personUserId=req.body.visitorPlusLikeUserId // like user id
+        const likesUserId = req.params.id; // login user id
+        console.log(personUserId, 'visitorPlusLike',likesUserId)
+        const userObj = await authUser.findById(likesUserId);
+        const anotherUserObj = await authUser.findById(personUserId);
+        if (!userObj || !anotherUserObj) {
+                 return res.status(404).json({ mssg: "User not found" });
+             }
+             userObj.likeUser.push(personUserId)
+             anotherUserObj.likes.push(likesUserId)
+             const visitorPlusLikeUser=await userObj.save()
+             const visitorLikeUser=await anotherUserObj.save()
+             let visitorPlusLikeUserArray
+             visitorPlusLikeUserArray=await authUser.find({
+                _id: { $in:visitorPlusLikeUser.likeUser }
+            })
+            let visitorLikeArray
+            visitorLikeArray=await authUser.find({
+                _id: { $in:visitorLikeUser.likes }
+            })
+             console.log('visitor person like',visitorPlusLikeUser)
+             res.json({visitorLikes:visitorPlusLikeUserArray,likes:visitorLikeArray})
+
+    }catch (error) {
+        console.error(error);
+        res.status(500).json({ mssg: "Internal server error" });
+    }
+}
+
+exports.getVisitorLikeUser=async(req,res)=>{ // function to get data of like user
+    try{
+        const userId = req.params.id; // login user id
+        const user = await authUser.findById(userId);
+        console.log('get visitor plus like user is',user)
+        // const blockUserArray=user.blockUserArray
+        // const oppositeBlockUserArray=user.oppositeBlockUserArray
+        let likeVisitorUserArray
+       likeVisitorUserArray=user.likeUser
+    //    likeVisitorUserArray = likeVisitorUserArray.filter(likeVisitorItem => !blockUserArray.includes(likeVisitorItem._id.toString()));
+    //    likeVisitorUserArray = likeVisitorUserArray.filter(likeVisitorItem => !oppositeBlockUserArray.includes(likeVisitorItem._id.toString()));
+        console.log(' like plus visitors is',likeVisitorUserArray)
+        let likeUser;
+        likeUser = await authUser.find({  
+            _id: { $in: likeVisitorUserArray }, 
+            
+        });
+        let likes
+        likes=await authUser.find({
+            _id: { $in:likeVisitorUserArray.likes }
+        })
+        res.json({visitorLikes:likeUser,likes:likes });
     }catch (error) {
         console.error(error);
         res.status(500).json({ mssg: "Internal server error" });

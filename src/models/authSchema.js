@@ -128,6 +128,9 @@ images: [{
   likeCounter:{
     type:Number
     },
+    visitorCounter:{
+      type:Number
+    },
   notify:{
     type:String
   },
