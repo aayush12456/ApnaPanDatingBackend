@@ -4,6 +4,7 @@ const ngrok = require('ngrok')
 const http = require('http');
 const db = require('./src/db/db');
 const userRoutes = require('./src/routes/authRoutes');
+const chatRoutes=require('./src/routes/chatRoutes')
 const path = require('path');
 const cors = require("cors");
 const socketCon = require('./socket');
@@ -24,6 +25,7 @@ app.use(express.json({ limit: '80mb' }));
 app.use('/images', express.static(path.join(__dirname, 'public', 'uploads')));
 app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use('/user', userRoutes);
+app.use('/chat',chatRoutes)
 const port = process.env.PORT || 4000;
 server.listen(port, '0.0.0.0', () => {
     console.log(`Server is running at http://192.168.29.169:${port}`);
@@ -81,6 +83,12 @@ io.on('connection', (socket) => {
     })
     socket.on('addVisitorLikeUser',(user)=>{
         io.emit('getVisitorLikeUser',user)
+    })
+    socket.on('addChatIdUser',(user)=>{
+        io.emit('getChatIdUser',user)
+    })
+    socket.on('sendMessage',(newMessage)=>{
+        io.emit('recieveMessage',newMessage)
     })
     socket.on('disconnect', (reason) => {
         console.log('A user disconnected with socket ID:', socket.id,'reason is',reason);
