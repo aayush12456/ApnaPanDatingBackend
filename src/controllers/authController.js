@@ -214,6 +214,7 @@ exports.allUser = async (req, res) => {
       filteredUsers = filteredUsers.filter(u => !onlineLikeUser.includes(u._id.toString()));
       // filteredUsers = filteredUsers.filter(u => ! deactivatedUser.includes(u._id.toString()));
       filteredUsers = filteredUsers.filter(u => !anotherMatchUser.includes(u._id.toString()));
+
       res.json({
           users: filteredUsers
       });
@@ -325,6 +326,31 @@ exports.addSkipUser = async (req, res) => { // if you want to unlike user that u
       res.status(500).json({ mssg: "Internal server error" });
   }
 };
+
+exports.getSkipUser = async (req, res) => { // if you want to unlike user that unlike user id store in a database with the help of these func
+    try {
+        const userId = req.params.id; // login person  userId
+        console.log('user id is', userId);
+  
+        // Fetch the user object based on the provided userId
+        const userObj = await authUser.findById(userId);
+        if (!userObj) {
+            return res.status(404).json({ mssg: "User not found" });
+        }
+        const getMatchSkipUserArray=userObj.filterData
+        let getMatchSkipUser;
+        getMatchSkipUser = await authUser.find({  
+            _id: { $in: getMatchSkipUserArray }, 
+            
+        });
+  
+        res.json({ matchSkipUser: getMatchSkipUser });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ mssg: "Internal server error" });
+    }
+  };
+  
 
 exports.addMatchUser = async (req, res) => {
   try {
@@ -705,22 +731,22 @@ exports.getLikeMatchUser=async(req,res)=>{ // function to get data of like user
         // const obj=await authUser.findById(user.matchNotify)
 
         // const deactivateUserArray=user.deactivatedIdArray
-        // const blockUserArray=user.blockUserArray 
-        // const oppositeBlockUserArray=user.oppositeBlockUserArray
+        const blockUserArray=user.blockUserArray 
+        const oppositeBlockUserArray=user.oppositeBlockUserArray
         
         let matchUser;
         matchUser = await authUser.find({  
             _id: { $in: getMatchUserArray }, 
             
         });
-        // matchUser = matchUser.filter(matchItem => !blockUserArray.includes(matchItem._id.toString()));
-        // matchUser = matchUser.filter(matchItem => !oppositeBlockUserArray.includes(matchItem._id.toString()));
+        matchUser = matchUser.filter(matchItem => !blockUserArray.includes(matchItem._id.toString()));
+        matchUser = matchUser.filter(matchItem => !oppositeBlockUserArray.includes(matchItem._id.toString()));
         let anotherMatchUser;
         anotherMatchUser=await authUser.find({
             _id: { $in:anothergetMatchUserArray }
         })
-        // anotherMatchUser = anotherMatchUser.filter(anotherMatchItem => !blockUserArray.includes(anotherMatchItem._id.toString()));
-        // anotherMatchUser = anotherMatchUser.filter(anotherMatchItem => !oppositeBlockUserArray.includes(anotherMatchItem._id.toString()));
+        anotherMatchUser = anotherMatchUser.filter(anotherMatchItem => !blockUserArray.includes(anotherMatchItem._id.toString()));
+        anotherMatchUser = anotherMatchUser.filter(anotherMatchItem => !oppositeBlockUserArray.includes(anotherMatchItem._id.toString()));
         // let anotherMatchUserData;
         // anotherMatchUserData=await authUser.find({
         //     _id: { $in:anothergetMatchUserData }
@@ -758,6 +784,30 @@ exports.addOnlineSkipUser=async(req,res)=>{ // function to store login user id i
     }
 }
 
+exports.getOnlineSkipUser = async (req, res) => { // if you want to unlike user that unlike user id store in a database with the help of these func
+    try {
+        const userId = req.params.id; // login person  userId
+        console.log('user id is', userId);
+  
+        // Fetch the user object based on the provided userId
+        const userObj = await authUser.findById(userId);
+        if (!userObj) {
+            return res.status(404).json({ mssg: "User not found" });
+        }
+        const getOnlineSkipUserArray=userObj.onlineSkipUser
+        let getOnlineSkipUser;
+        getOnlineSkipUser = await authUser.find({  
+            _id: { $in: getOnlineSkipUserArray }, 
+            
+        });
+  
+        res.json({ getOnlineSkipUser: getOnlineSkipUser });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ mssg: "Internal server error" });
+    }
+  };
+  
 exports.addOnlineLikeUser=async(req,res)=>{ // function to store login user id in a like user
     try{
         const onlinePersonLikeUserId=req.body.onlinePersonLikeUserId // like user id
@@ -1150,3 +1200,162 @@ exports.getVisitorLikeUser=async(req,res)=>{ // function to get data of like use
         res.status(500).json({ mssg: "Internal server error" });
     }
 }
+
+exports.deleteSkipProfileUser = async (req, res) => {
+    console.log('Response of skip profile:', req.body);
+    try {
+        const id = req.params.id;
+        const deleteUserId = req.query.deleteUserId;
+        console.log('Delete user ID:', deleteUserId);
+
+        const user = await authUser.findById(id);
+        if (!user) {
+            return res.status(404).json({ mssg: "User not found" });
+        }
+
+        console.log('User before deletion:', user);
+
+        // await authUser.updateOne( // keval single data delete karne ke liye
+        //     { _id: id },
+        //     { $pull: { onlineSkipUser: deleteUserId } }
+        // );
+        await authUser.updateOne(
+            { _id: id },
+            {
+              $pull: {
+                onlineSkipUser: deleteUserId,
+                filterData: deleteUserId
+              }
+            }
+        );
+        console.log('User after deletion:', await authUser.findById(id));
+
+        res.status(200).json({ mssg: "User updated successfully" ,deleteId:deleteUserId});
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ mssg: "Internal server error" });
+    }
+};
+exports.blockChatIdUser=async(req,res)=>{
+    try{
+   const id=req.params.id
+   const blockId=req.body.blockId
+   const loginObj=await authUser.findById(id)
+   const blockObj=await authUser.findById(blockId)
+   
+   if (!loginObj) {
+    return res.status(404).send({ mssg: 'User not found' });
+}
+   loginObj.blockUserArray.push(blockId)
+   blockObj.oppositeBlockUserArray.push(id)
+   const finalLoginObj=await loginObj.save()
+   const finalOppositeLoginObj=await blockObj.save()
+   let blockUser;
+   blockUser = await authUser.find({  
+       _id: { $in: finalLoginObj.blockUserArray }, 
+       
+   });
+   let anotherBlockUser
+   anotherBlockUser = await authUser.find({  
+    _id: { $in: finalOppositeLoginObj.oppositeBlockUserArray }, 
+    
+});
+   res.status(200).send({mssg:'block user successfully',blockUserArray:blockUser,anotherBlockUserArray:anotherBlockUser})
+    }catch(e){
+        res.status(500).send({mssg:'internal server error'})   
+    }
+}
+exports.getBlockChatIdUser=async(req,res)=>{
+    try{
+        const id=req.params.id
+        const loginObj=await authUser.findById(id)
+        const blockUserArrayData=loginObj.blockUserArray
+        const anotherBlockUserArrayData=loginObj.oppositeBlockUserArray
+        const blockUserArray=await authUser.find({
+            _id:{$in:blockUserArrayData}
+        })
+        const anotherBlockUserArray=await authUser.find({
+            _id:{$in:anotherBlockUserArrayData}
+        })
+        res.status(200).send({mssg:'block message fetch data successfuly',blockUserArray:blockUserArray,anotherBlockUserArray:anotherBlockUserArray})
+
+    }catch(e){
+        res.status(500).send({mssg:'internal server error'})    
+    }
+}
+// exports.deleteBlockUser = async (req, res) => {
+//     try {
+//         const id = req.params.id; // Logged-in user ID
+//         const blockId = req.query.blockId; // ID of the user to unblock
+
+//         // Find the logged-in user and the blocked user
+//         const loginObj = await authUser.findById(id);
+//         const blockObj = await authUser.findById(blockId);
+
+//         if (!loginObj || !blockObj) {
+//             return res.status(404).send({ mssg: 'User not found' });
+//         }
+
+//         // Remove blockId from blockUserArray of the logged-in user
+//         await authUser.findByIdAndUpdate(id, {
+//             $pull: { blockUserArray: blockId }
+//         });
+
+//         // Remove id from oppositeBlockUserArray of the blocked user
+//         await authUser.findByIdAndUpdate(blockId, {
+//             $pull: { oppositeBlockUserArray: id }
+//         }); 
+
+//         res.send({ mssg: 'User unblocked successfully' });
+//     } catch (e) {
+//         console.error(e);
+//         res.status(500).send({ mssg: 'Internal server error' });
+//     }
+
+// };
+exports.deleteBlockUser = async (req, res) => {
+    try {
+        const id = req.params.id; // Logged-in user ID
+        const blockId = req.body.blockId; // ID of the user to unblock
+
+        // Find the logged-in user and the blocked user
+        const loginObj = await authUser.findById(id);
+        const blockObj = await authUser.findById(blockId);
+
+        if (!loginObj || !blockObj) {
+            return res.status(404).send({ mssg: 'User not found' });
+        }
+
+        // Remove blockId from blockUserArray of the logged-in user
+        await authUser.findByIdAndUpdate(id, {
+            $pull: { blockUserArray: blockId }
+        });
+
+        // Remove id from oppositeBlockUserArray of the blocked user
+        await authUser.findByIdAndUpdate(blockId, {
+            $pull: { oppositeBlockUserArray: id }
+        });
+
+        // Fetch updated documents
+        const updatedLoginObj = await authUser.findById(id).select('blockUserArray');
+        const updatedBlockObj = await authUser.findById(blockId).select('oppositeBlockUserArray');
+
+        // Fetch updated block users based on IDs
+        const blockUser = await authUser.find({
+            _id: { $in: updatedLoginObj.blockUserArray }
+        });
+
+        const anotherBlockUser = await authUser.find({
+            _id: { $in: updatedBlockObj.oppositeBlockUserArray }
+        });
+
+        res.send({
+            mssg: 'User unblocked successfully',
+            blockUserArray: blockUser,
+            anotherBlockUserArray: anotherBlockUser
+        });
+    } catch (e) {
+        console.error(e);
+        res.status(500).send({ mssg: 'Internal server error' });
+    }
+};

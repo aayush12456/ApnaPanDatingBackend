@@ -18,6 +18,7 @@ router.post('/updateUser/:id', userController.updateauthUser);
 router.get('/allUsers/:id', userController.allUser);
 router.get('/filterUsers/:id', userController.getFilterUser);
 router.post('/addSkipUser/:id',userController.addSkipUser)
+router.get('/getSkipUser/:id',userController.getSkipUser)
 router.post('/addMatchUser/:id', userController.addMatchUser);
 router.get('/getMatchUser/:id', userController.getMatchUser);
 router.post('/addLikeSmsText/:id', userController.addLikeSmsTextUser);
@@ -29,6 +30,8 @@ router.get('/getCommonVisitorLikeSkipUser/:id', userController.getCommonVisitorL
 router.post('/addLikeMatchUser/:id', userController.addLikeMatchUser);
 router.get('/getLikeMatchUser/:id', userController.getLikeMatchUser);
 router.post('/addOnlineSkipUser/:id', userController.addOnlineSkipUser);
+router.get('/getOnlineSkipUser/:id', userController.getOnlineSkipUser);
+router.delete('/deleteSkipProfile/:id', userController.deleteSkipProfileUser); 
 router.post('/addOnlineLikeUser/:id', userController.addOnlineLikeUser);
 router.get('/getOnlineLikeUser/:id', userController.getOnlineLikeUser);
 router.post('/addVisitorUser/:id',userController.addVisitorUser)
@@ -39,4 +42,8 @@ router.post('/deleteVisitorCount', userController.deleteVisitorCounterUser);
 router.post('/addVisitorSendEmail/:id', userController.addVisitorSendEmailUser);
 router.post('/addVisitorLikeUser/:id', userController.addVisitorLikeUser);
 router.get('/getVisitorLikeUser/:id', userController.getVisitorLikeUser);
+router.post('/addBlockChatIdUser/:id', userController.blockChatIdUser);
+router.get('/getBlockChatIdUser/:id', userController.getBlockChatIdUser);
+// router.delete('/deleteBlockIdUser/:id', userController.deleteBlockUser );
+router.post('/deleteBlockIdUser/:id', userController.deleteBlockUser );
 module.exports = router;

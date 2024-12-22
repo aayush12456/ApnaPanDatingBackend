@@ -9,7 +9,7 @@ router.get('/getChatId',chatController.getChat)
 // router.post('/showIndicator',chatController.showIndicator)
 router.post('/deleteChat',chatController.deleteChat)
 // // router.post('/askWithChatExpert',chatController.chatWithExpert)
-// router.get('/getAllChatId',chatController.getAllChatId)
+router.get('/getAllChatId',chatController.getAllChatId)
 // router.post('/postTyping',chatController.postTyping)
 // router.get('/getTyping/:id',chatController.getTyping)
 module.exports=router

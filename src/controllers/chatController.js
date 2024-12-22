@@ -158,3 +158,14 @@ exports.addChat = async (req, res) => {
         res.status(500).send({ mssg: 'An error occurred while fetching chat data' });
       }
     }
+    exports.getAllChatId = async (req, res) => {
+      try {
+     const AllChatIdArray=await chatIdUser.find()
+     res.status(200).send({mssg:'all chats fetch succesfully',chatIdArray:AllChatIdArray
+    })
+    
+      } catch (e) {
+        console.error(e);
+        res.status(500).send({ mssg: 'An error occurred while fetching chat data' });
+      }
+    }

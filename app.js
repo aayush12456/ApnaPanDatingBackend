@@ -90,6 +90,15 @@ io.on('connection', (socket) => {
     socket.on('sendMessage',(newMessage)=>{
         io.emit('recieveMessage',newMessage)
     })
+    socket.on('addBlockUser',(blockUser)=>{
+        io.emit('getBlockUser',blockUser)
+    })
+    //    socket.on('addResetSkipProfile',(resetProfile)=>{
+    //     io.emit('getResetSkipProfile',resetProfile)
+    // })
+    socket.on('deleteBlockUser',(blockUser)=>{
+        io.emit('getBlockUser',blockUser)
+    })
     socket.on('disconnect', (reason) => {
         console.log('A user disconnected with socket ID:', socket.id,'reason is',reason);
     });
