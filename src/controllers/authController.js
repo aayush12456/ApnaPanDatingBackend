@@ -6,8 +6,10 @@ const twilio=require('twilio')
 const nodemailer = require('nodemailer');
 const ObjectId = mongoose.Types.ObjectId;
 const dotenv=require('dotenv')
+const jwt = require("jsonwebtoken");
 dotenv.config()
 const client = twilio(process.env.TWILIO_SID,process.env. TWILIO_AUTH_TOKEN);
+
 cloudinary.config({ 
     cloud_name:process.env.CLOUD_NAME,
     api_key:process.env.API_KEY,
@@ -162,6 +164,142 @@ exports.login = async (req, res) => {
   }
 };
 
+// exports.verifyToken=async(req,res)=>{
+//     try{
+//         const token = req.headers.authorization?.split(' ')[1]; // Extract token from "Bearer <token>"
+//         console.log('header token',token)
+
+//         if (!token) {
+//           return res.status(401).json({ error: 'No token provided' });
+//         }
+      
+//         jwt.verify(token, 'registerData', (err, decoded) => {
+//           if (err) {
+//             return res.status(401).json({ error: 'Invalid or expired token' });
+//           }
+      
+//           res.status(200).json({ message: 'Token is valid', userId: decoded.id });
+//         });
+//     }catch(e){
+//         res.status(400).send({ mssg: "Wrong login details. Please try again.", response: 400 });
+//     }
+// }
+const generateRandomCode = () => {
+    return Math.floor(10000 + Math.random() * 90000).toString();
+};
+
+exports.loginWithOtp=async (req,res)=>{
+    try{
+     const phone=req.body.phone
+     const reset=req.body.reset
+     const allUser=await authUser.find()
+     console.log('all user is',allUser)
+     const filterPhoneObjArray=allUser.filter((userItem)=>userItem.phone==phone)
+     const filterPhoneObj=filterPhoneObjArray[0]
+     if(!filterPhoneObj){
+        res.status(400).send({mssg:"please verify phone number"})
+        return
+  }
+  
+  const randomCode = generateRandomCode(); 
+  let message=''
+  if(reset=='Reset Password'){
+    message=`Your reset Password OTP is ${randomCode}`
+  }
+  else{
+    message=`Your Login OTP is ${randomCode}`
+  }
+  await client.messages.create({
+    body:message,
+    //aayushtapadia28@gmail.com or aayushtapadia2001@gmail.com generate twillo phone number
+    // from: '+12513335644', // Your Twilio phone number
+    from: '+12185304074',
+    to: '+91'+filterPhoneObj.phone.toString() // Phone number of likeUserObj
+});
+filterPhoneObj.otp=randomCode
+    await filterPhoneObj.save();
+      res.status(201).send({mssg:'Login Successfully',otp:randomCode,phoneNumber:filterPhoneObj.phone})
+    
+   
+    }catch(e){
+        res.status(400).send({mssg:"Wrong login details. Please try again.",response:400})
+    }
+}
+
+exports.compareLoginWithOtp=async (req,res)=>{
+    try{
+     const OTP=req.body.otp
+     const allUser=await authUser.find()
+     console.log('all user is',allUser)
+     const OTPPhoneObjArray=allUser.filter((userItem)=>userItem.otp==OTP)
+     const OTPPhoneObj=OTPPhoneObjArray[0]
+     if(!OTPPhoneObj){
+        res.status(400).send({mssg:"OTP does not match"})
+        return
+  }
+//   const existingLoginIdUser = await loginIdUser.findOne({ loginId: OTPPhoneObj._id });
+//   let existingLoginData;
+
+//   if (!existingLoginIdUser) {
+//     const loginDataObj = new loginIdUser({
+//       loginId: OTPPhoneObj._id.toString(),
+//       loginEmail: OTPPhoneObj.email
+//     });
+//   existingLoginData=  await loginDataObj.save();
+//   } else {
+//     console.log('User is already logged in on another device.');
+//     existingLoginData = existingLoginIdUser;
+//   }
+     const token = await OTPPhoneObj.generateAuthToken();
+     console.log('login token is',token)
+     OTPPhoneObj.otp=''
+     await OTPPhoneObj.save()
+      res.status(201).send({mssg:'Login Successfully', response:201,token:token,userId:OTPPhoneObj._id,
+      loginData: { name:OTPPhoneObj.firstName,image:OTPPhoneObj.images[0],gender:OTPPhoneObj.gender,_id:OTPPhoneObj._id },
+      completeLoginData:OTPPhoneObj
+    })
+    }catch(e){
+        res.status(400).send({mssg:"Wrong login otp  details. Please try again.",response:400})
+    }
+}
+
+
+exports.addForgotUpdatePasswordUser = async (req, res) => {
+    try {
+   const phone=req.body.phoneNumber
+   const confirmPassword=req.body.confirmNewPassword
+   const forgotUpdateArray=await authUser.find()
+   console.log('forgot update array user',forgotUpdateArray)
+   const updatePasswordArray=forgotUpdateArray.filter((updateItem)=>updateItem.phone===phone)
+   console.log(' update array password user',updatePasswordArray)
+   if (updatePasswordArray.length > 0) {
+    const userToUpdate = updatePasswordArray[0];
+    console.log('User to update:', userToUpdate);
+    
+    // Update the user's password (assuming the user model has a method to update password)
+    userToUpdate.password = confirmPassword;
+    await userToUpdate.save(); // Save the updated user object
+
+    res.status(200).json({ msg: "Password updated successfully" });
+  } else {
+    res.status(404).json({ msg: "User not found" });
+  }
+     
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ msg: "Internal server error" });
+    }
+  };
+exports.completeAllUser = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const allUser=await authUser.find()
+        const allPhoneNumberArray=allUser.map((item)=>item.phone)
+        res.status(201).send({mssg:"phone number array",phoneNumberArray:allPhoneNumberArray})
+    }catch(e){
+        res.status(400).send({mssg:"Wrong details. Please try again.",response:400})
+    }
+}
 exports.updateauthUser=async(req,res)=>{ // function to update user
   try{
       const _id=req.params.id
@@ -1359,3 +1497,94 @@ exports.deleteBlockUser = async (req, res) => {
         res.status(500).send({ mssg: 'Internal server error' });
     }
 };
+
+exports.addUpdatePasswordUser = async (req, res) => {
+    try {
+      const id = req.params.id;
+      const currentPassword = req.body.currentPassword;
+      const updatePassword = req.body.confirmNewPassword;
+      console.log('update password is', currentPassword);
+  
+      const user = await authUser.findById(id);
+      if (!user) {
+        return res.status(404).json({ msg: "User not found" });
+      }
+  
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+      if (!isMatch) {
+        return res.status(400).json({ msg: "Current password is incorrect" });
+      }
+  
+      // Update user's password and save
+      user.password = updatePassword; // Assign the new password
+      await user.save(); // This will trigger the pre-save hook in authSchema.js
+      console.log('New password set:', user.password);
+  
+      res.status(200).json({ msg: "Password updated successfully" });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ msg: "Internal server error" });
+    }
+  };
+  exports.deleteProfileUser = async (req, res) => {
+    try {
+      const id = req.params.id;
+      const deletedUser = await authUser.findByIdAndDelete(id);
+  
+      if (!deletedUser) {
+        return res.status(404).json({ msg: "User not found" });
+      }
+  
+      // Remove the visitor object from the visitors array of all users where visitorId matches the deleted user's ID
+    //   await authUser.updateMany( // ye keval data delete karne ke liye
+    //     { 'visitors.visitorId': id },
+    //     { $pull: { visitors: { visitorId: id } } }
+    //   );
+    await authUser.updateMany(
+        {
+          $or: [
+            { 'visitors.visitorId': id },
+            { 'filterData': id },
+            { 'likes': id },
+            { 'likeFilterData': id },
+            { 'likeUser': id },
+            { 'skipUser': id },
+            { 'matchUser': id },
+            { 'anotherMatchUser': id },
+            { 'anotherMatchData': id },
+            { 'anotherLikeUser': id },
+            { 'hideRemainMatch': id },
+            { 'onlineLikeUser': id },
+            { 'likeMatch': id },
+            { 'anotherLikeMatch': id },
+            { 'onlineSkipUser': id },
+            { 'selfOnlineLikeUser': id }
+          ]
+        },
+        {
+          $pull: {
+            visitors: { visitorId: id },
+            filterData:id,
+            likes:id,
+            likeFilterData:id,
+            likeUser:id,
+            skipUser: id,
+            matchUser:id,
+            anotherMatchUser:id,
+            anotherMatchData:id,
+            anotherLikeUser:id,
+            hideRemainMatch:id,
+            onlineLikeUser:id,
+            likeMatch:id,
+            anotherLikeMatch:id,
+            onlineSkipUser:id,
+            selfOnlineLikeUser:id
+          }
+        }
+      );
+      res.status(200).json({ msg: "User deleted successfully" });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ msg: "Internal server error" });
+    }
+  };

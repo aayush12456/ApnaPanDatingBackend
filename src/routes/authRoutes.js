@@ -4,6 +4,7 @@ const multer = require('multer');
 const router = express.Router();
 const storage = multer.diskStorage({});
 const userController = require('../controllers/authController');
+const authMiddleware=require('../middleware/authMiddleware')
 // Initialize multer middleware
 const upload = multer({
   storage: storage,
@@ -14,6 +15,11 @@ router.use(express.static('public'));
 // router.post('/signup', upload.fields([{ name: 'images', maxCount: 4 }, { name: 'videoUrl', maxCount: 1 }]), userController.register);
 router.post('/signup', userController.register);
 router.post('/login', userController.login);
+// router.post('/verifyToken', userController.verifyToken);
+router.post('/loginWithOtp', userController.loginWithOtp)
+router.post('/verifyOtp', userController.compareLoginWithOtp)
+router.post('/forgotUpdatePasswordUser', userController.addForgotUpdatePasswordUser);
+router.get('/completeAllUser/:id', userController.completeAllUser)
 router.post('/updateUser/:id', userController.updateauthUser);
 router.get('/allUsers/:id', userController.allUser);
 router.get('/filterUsers/:id', userController.getFilterUser);
@@ -46,4 +52,6 @@ router.post('/addBlockChatIdUser/:id', userController.blockChatIdUser);
 router.get('/getBlockChatIdUser/:id', userController.getBlockChatIdUser);
 // router.delete('/deleteBlockIdUser/:id', userController.deleteBlockUser );
 router.post('/deleteBlockIdUser/:id', userController.deleteBlockUser );
+router.post('/updatePasswordUser/:id', userController.addUpdatePasswordUser);
+router.delete('/deleteProfileUser/:id', userController.deleteProfileUser);
 module.exports = router;
