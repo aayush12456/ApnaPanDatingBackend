@@ -1,6 +1,9 @@
 const ChatUser=require('../models/chatSchema')
+const authUser=require('../models/authSchema')
 const chatIdUser=require('../models/chatIdSchema')
 const moment = require('moment-timezone');
+const mongoose = require('mongoose');
+const ObjectId = mongoose.Types.ObjectId;
 exports.addChat = async (req, res) => {
     try {
       const { id, anotherId, loginName, anotherName } = req.body;
@@ -169,3 +172,74 @@ exports.addChat = async (req, res) => {
         res.status(500).send({ mssg: 'An error occurred while fetching chat data' });
       }
     }
+    exports.postTyping = async (req, res) => {
+      try {
+        const loginId=req.params.loginId
+        const {  senderId, recieverId } = req.body;
+    
+        // Find the receiver's object in the database
+        const recieverObj = await authUser.findById(recieverId);
+    
+        if (!recieverObj) {
+          return res.status(404).send({ mssg: 'Receiver not found' });
+        }
+    
+        // Update the postTyping field with the new values
+       recieverObj.typing.push(senderId)
+        // Save the updated receiver object
+        const recieverObjData = await recieverObj.save();
+    
+        res.status(200).send({ mssg: 'Typing message updated', data: recieverObjData.typing });
+    
+      } catch (e) {
+        console.error(e);
+        res.status(500).send({ mssg: 'An error occurred while updating typing message' });
+      }
+    };
+    exports.getTyping=async(req,res)=>{
+      try{
+    const id=req.params.id
+    const loginObj=await authUser.findById(id)
+    const typeData=loginObj.typing
+    res.status(200).send({mssg:'get type successfully',data:typeData})
+      }
+      catch (e) {
+        console.error(e);
+        res.status(500).send({ mssg: 'An error occurred while updating typing message' });
+      }
+      }
+
+      exports.deleteTyping = async (req, res) => {
+        try {
+            const { senderId, recieverId ,loginId} = req.body;
+           console.log('type of login id',typeof(loginId))
+            // Ensure reciever exists
+            const recieverObj = await authUser.findById(recieverId);
+    
+            if (!recieverObj) {
+                return res.status(404).send({ mssg: 'Receiver not found' });
+            }
+    
+            // Ensure loginId is a valid ObjectId
+            if (!ObjectId.isValid(loginId)) {
+                return res.status(400).send({ mssg: 'Invalid loginId' });
+            }
+    
+            const result = await authUser.updateOne(
+                { _id: recieverId },
+                { $pull: { typing: new ObjectId(loginId) } }
+            );
+    
+            // Check if any document was modified
+            // if (result.modifiedCount === 0) {
+            //     return res.status(404).send({ mssg: 'LoginId not found in typing array' });
+            // }
+            const updatedRecieverObj = await authUser.findById(recieverId);
+            const io = req.app.locals.io;
+            io.emit('typingChatDeleted',updatedRecieverObj.typing);
+            res.status(200).send({ mssg: 'Typing message deleted successfully',recieverObj:updatedRecieverObj.typing});
+        } catch (e) {
+            console.error(e);
+            res.status(500).send({ mssg: 'An error occurred while deleting typing message' });
+        }
+    };

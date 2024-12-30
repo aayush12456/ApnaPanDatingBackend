@@ -1,5 +1,6 @@
 const bcrypt=require('bcrypt')
 const authUser=require('../models/authSchema')
+const loginIdUser=require('../models/loginIdSchema')
 const mongoose = require('mongoose');
 const cloudinary = require("cloudinary").v2;
 const twilio=require('twilio')
@@ -119,12 +120,15 @@ exports.login = async (req, res) => {
     const password = req.body.password;
 
     const userEmail = await authUser.findOne({ email: email });
-
     if (!userEmail) {
       res.status(400).send({ mssg: "Email does not exist", response: 400 });
       return;
     }
-
+    const loginIdObj=new loginIdUser({
+        loginId:userEmail._id,
+        loginEmail:userEmail.email
+    })
+    await loginIdObj.save()
     const isMatch = await bcrypt.compare(password, userEmail.password);
     console.log('password login data', isMatch);
 
@@ -133,28 +137,31 @@ exports.login = async (req, res) => {
       console.log('login token is', token);
 
       const data = await authUser.findOne({ email: email });
+    //   const existingLoginIdUser = await loginIdUser.findOne({ loginId: data._id });
+    //   let existingLoginData;
 
-      // const existingLoginIdUser = await loginIdUser.findOne({ loginId: data._id });
-      // let existingLoginData;
-
-      // if (!existingLoginIdUser) {
-      //   const loginDataObj = new loginIdUser({
-      //     loginId: data._id.toString(),
-      //     loginEmail: data.email
-      //   });
-      // existingLoginData=  await loginDataObj.save();
-      // } else {
-      //   console.log('User is already logged in on another device.');
-      //   existingLoginData = existingLoginIdUser;
-      // }
+    //   if (!existingLoginIdUser) {
+    //     const loginDataObj = new loginIdUser({
+    //       loginId: data._id.toString(),
+    //       loginEmail: data.email
+    //     });
+    //   existingLoginData=  await loginDataObj.save();
+    //   } else {
+    //     console.log('User is already logged in on another device.');
+    //     existingLoginData = existingLoginIdUser;
+    //   }
+      const allLoginUserArray=await loginIdUser.find()
+      const loginIdUserArray = allLoginUserArray.map((loginItem) => loginItem.loginId);
+      const loginIds=loginIdUserArray.filter((item)=>item.toString()!==data._id.toString())
       res.status(201).send({
         mssg: 'Login Successfully',
         response: 201,
         loginData: { name:data.firstName,image:data.images[0],gender:data.gender,_id:userEmail._id },
         token: token,
         userId: userEmail._id,
-        completeLoginData:data
+        completeLoginData:data,
         // existingLoginData: existingLoginData
+        loginIdUserArray:loginIdUserArray
       });
     } else {
       res.status(400).send({ mssg: "Wrong password", response: 400 });
@@ -164,6 +171,42 @@ exports.login = async (req, res) => {
   }
 };
 
+
+
+exports.getLoginIdUsers=async(req,res)=>{
+    try{
+    const id=req.params.id
+    const loginIdUserData=await loginIdUser.find()
+    const loginIdUserArray=loginIdUserData.filter((loginItem)=>loginItem.loginId!==id)
+    const loginIds = loginIdUserArray.map((loginItem) => loginItem.loginId);
+    const loginUserArray=await authUser.find({
+        _id:{$in:loginIds}
+    })
+    res.json({loginIdUserArray:loginIds,loginUserArray:loginUserArray})
+    }catch(e){
+            res.status(404).send({mssg:'internal server error'})
+        }
+    }
+
+    exports.deleteLoginIdUser=async(req,res)=>{
+        try{
+       const loginId=req.body.loginId
+    const loginIdUserObj=await loginIdUser.findOne({loginId:loginId})
+       const deletedUser = await loginIdUser.findOneAndDelete(loginIdUserObj._id);
+       const io = req.app.locals.io;
+       const allLoginUserArray=await loginIdUser.find()
+            const loginIdUserArray = allLoginUserArray.map((loginItem) => loginItem.loginId);
+            const loginIds=loginIdUserArray.filter((item)=>item.toString()!==deletedUser._id.toString())
+       io.emit('deleteLoginIdUser',loginIds);
+       if (!deletedUser) {
+           return res.status(404).send({ mssg: 'User not found' });
+       }
+    
+       res.status(200).send({ mssg: 'User deleted successfully',deletedUserData:deletedUser });
+        }catch(e){
+            res.status(500).send({mssg:'internal server error'})
+        }
+    }
 // exports.verifyToken=async(req,res)=>{
 //     try{
 //         const token = req.headers.authorization?.split(' ')[1]; // Extract token from "Bearer <token>"

@@ -338,6 +338,12 @@ postTyping:{
 //   }
  
 // ],
+typing:[ // schema for like user id
+{
+  type:Schema.Types.ObjectId,
+  ref:'UserData'
+}
+],
 messageNotify: [
   {
     loginId: {
@@ -367,6 +373,7 @@ messageNotify: [
    images:{
     type:String
    },
+
     timestamp: {
       type: Date,
       required: true,

@@ -99,6 +99,12 @@ io.on('connection', (socket) => {
     socket.on('deleteBlockUser',(blockUser)=>{
         io.emit('getBlockUser',blockUser)
     })
+    socket.on('postTyping',(blockUser)=>{
+        io.emit('getTyping',blockUser)
+    })
+    socket.on('loginUser',(loginUser)=>{
+        io.emit('getLoginUser',loginUser)
+    })
     socket.on('disconnect', (reason) => {
         console.log('A user disconnected with socket ID:', socket.id,'reason is',reason);
     });

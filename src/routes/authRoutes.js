@@ -15,6 +15,8 @@ router.use(express.static('public'));
 // router.post('/signup', upload.fields([{ name: 'images', maxCount: 4 }, { name: 'videoUrl', maxCount: 1 }]), userController.register);
 router.post('/signup', userController.register);
 router.post('/login', userController.login);
+router.get('/getAllLoginIdUser/:id', userController.getLoginIdUsers)
+router.post('/deleteLoginIdUser', userController.deleteLoginIdUser);
 // router.post('/verifyToken', userController.verifyToken);
 router.post('/loginWithOtp', userController.loginWithOtp)
 router.post('/verifyOtp', userController.compareLoginWithOtp)
