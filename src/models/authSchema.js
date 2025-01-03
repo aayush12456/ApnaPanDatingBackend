@@ -344,6 +344,19 @@ typing:[ // schema for like user id
   ref:'UserData'
 }
 ],
+recordMessageId:[ // schema for like user id
+{
+  type:Schema.Types.ObjectId,
+  ref:'UserData'
+}
+],
+anotherRecordMessageId:[ // schema for like user id
+{
+  type:Schema.Types.ObjectId,
+  ref:'UserData'
+}
+],
+
 messageNotify: [
   {
     loginId: {

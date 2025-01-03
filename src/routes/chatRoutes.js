@@ -13,4 +13,9 @@ router.get('/getAllChatId',chatController.getAllChatId)
 router.post('/postTyping/:id',chatController.postTyping)
 router.get('/getTyping/:id',chatController.getTyping)
 router.post('/deleteTyping',chatController.deleteTyping)
+router.post('/addRecordMessage/:id', chatController.addRecordMessage);
+router.get('/getRecordMessage/:id',chatController.getRecordMessage)
+router.post('/deleteRecordMessage/:id',chatController.deleteRecordMessage)
+router.post('/addAnotherRecordMessage/:id',chatController.addAnotherRecordMessage)
+router.post('/deleteAnotherRecordMessage/:id',chatController.deleteAnotherRecordMessage)
 module.exports=router

@@ -89,6 +89,7 @@ io.on('connection', (socket) => {
     })
     socket.on('sendMessage',(newMessage)=>{
         io.emit('recieveMessage',newMessage)
+
     })
     socket.on('addBlockUser',(blockUser)=>{
         io.emit('getBlockUser',blockUser)
@@ -104,6 +105,14 @@ io.on('connection', (socket) => {
     })
     socket.on('loginUser',(loginUser)=>{
         io.emit('getLoginUser',loginUser)
+    })
+    socket.on('addRecordMessageId',(newId)=>{
+        io.emit('recieveRecordMessageId',newId)
+
+    })
+    socket.on('deleteRecordMessageId',(newId)=>{
+        io.emit('recieveRecordMessageId',newId)
+
     })
     socket.on('disconnect', (reason) => {
         console.log('A user disconnected with socket ID:', socket.id,'reason is',reason);
