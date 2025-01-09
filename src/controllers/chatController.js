@@ -3,6 +3,7 @@ const authUser=require('../models/authSchema')
 const chatIdUser=require('../models/chatIdSchema')
 const moment = require('moment-timezone');
 const mongoose = require('mongoose');
+const nodemailer = require('nodemailer');
 const ObjectId = mongoose.Types.ObjectId;
 exports.addChat = async (req, res) => {
     try {
@@ -307,22 +308,49 @@ exports.addChat = async (req, res) => {
        const loginId=req.params.id
        const recieverId=req.body.recieverId
         const receiverObj = await authUser.findById(recieverId);
-    
+        const loginObj = await authUser.findById(loginId);
+        const indianTime = moment().tz('Asia/Kolkata').toISOString();
         if (receiverObj) {
           // Check if loginId is in anotherRecordMessageId
           if (!receiverObj.anotherRecordMessageId.includes(loginId)) {
             // Push loginId to recordMessageId if not in anotherRecordMessageId
             receiverObj.recordMessageId.push(loginId);
+            receiverObj.messageNotify.push({ loginId: loginId, recieverId:recieverId,recieverName:loginObj.firstName,images:loginObj.images[0],timestamp:indianTime });
+            const transporter = nodemailer.createTransport({
+              service: 'gmail',
+              auth: {
+                  // user: 'aayushtapadia28@gmail.com',
+                  // pass: 'rfrx hntu pyhh tiaf'
+                  user: 'apnapan96@gmail.com',
+                  pass: 'jqcz pymc zffw tmni'
+              }
+          });
+            const mailOptions = {
+              // from: 'aayushtapadia28@gmail.com',
+              from: 'apnapan96@gmail.com',
+              to: receiverObj.email,
+              subject: `Hey ${receiverObj.firstName} - there was a new message on your profile. Check them out`,
+              html: `<h1 style="text-Align:center; font-size:30px;font-weight:bold">ApnaPan</h1>
+              <hr style="color:grey;"/>
+              <p style="padding-top:1rem;font-size:1.2rem">Hi ${receiverObj.firstName},</p>
+              <p style="font-weight:bold; padding-top:1rem;font-size:1.2rem;color:black">${loginObj.firstName} <span style="font-weight:normal;">replied to your message on ApnaPan. See the message and reply</span></p>
+              <div style='display:flex;justify-content:center;margin-top:4rem'>
+              <a href="https://apnapandating.netlify.app/" style="text-decoration:none;"> <button type='btn' style="background-color:green;font-size:17px;font-weight:bold;color:white;height:45px;width:18rem;border-radius:25px;cursor:pointer" >Read Message</button></a>
+              </div>`
+          };
+          const result = await transporter.sendMail(mailOptions);
+          console.log('Email sent: ', result);
           }
     
           // Save the updated receiver object
           const recieverObjData = await receiverObj.save();
-    
+          
           // Respond with success
           res.status(201).send({
             mssg: 'record message id added successfully',
             recordMessageIdArray: recieverObjData.recordMessageId,
-            id:recieverId
+            id:recieverId,
+            messageNotify:receiverObj.messageNotify
           });
         } else {
           console.log("Receiver not found");
@@ -340,7 +368,23 @@ exports.addChat = async (req, res) => {
     const id=req.params.id
     const loginObj=await authUser.findById(id)
     const recordMessageId=loginObj.recordMessageId
-    res.status(200).send({mssg:'get record message array',recordMessageIdArray:recordMessageId,id:id})
+    const fiveSecondsAgo = moment().subtract(5, 'seconds').toDate();
+    const updatedUser = await authUser.findByIdAndUpdate(
+      id,
+      {
+        $pull: {
+          messageNotify: { timestamp: { $lt: fiveSecondsAgo } },
+        },
+      },
+      { new: true } // Return the updated document
+    );
+
+    // Check if user exists
+    if (!updatedUser) {
+      return res.status(404).send({ mssg: 'User not found' });
+    }
+  
+    res.status(200).send({mssg:'get record message array',recordMessageIdArray:recordMessageId,id:id,messageNotify: updatedUser.messageNotify,})
       }
       catch (e) {
         console.error(e);
@@ -354,7 +398,10 @@ exports.addChat = async (req, res) => {
           // Fetch all existing chat records
      const loginObj=await authUser.findById(loginId)
      loginObj.anotherRecordMessageId.push(recieverId)
+  
+
      const finalLoginObj=await loginObj.save()          
+  
           res.status(201).send({ mssg: 'Chat Data added Successfully',anotherRecordMessageIdArray:finalLoginObj.anotherRecordMessageId});
         } catch (e) {
           console.error(e);
@@ -367,17 +414,23 @@ exports.addChat = async (req, res) => {
           const recieverId = req.body.recieverId; // The receiver's ID to be removed
       
           // Use Mongoose to update the document
-          const result = await authUser.findByIdAndUpdate(
-            loginId, // Find the document by loginId
-            { $pull: { recordMessageId: recieverId } }, // Remove recieverId from recordMessageId array
+          // const result = await authUser.findByIdAndUpdate(
+          //   loginId, // Find the document by loginId
+          //   { $pull: { recordMessageId: recieverId } }, // Remove recieverId from recordMessageId array
+          //   { new: true } // Return the updated document
+          // );
+      
+          const result = await authUser.findOneAndUpdate(
+            { _id: loginId }, // Find the document by loginId
+            { 
+              $pull: { 
+                recordMessageId: recieverId, // Remove receiverId from recordMessageId array
+                messageNotify: { loginId: recieverId } // Remove object from messageNotify array
+              } 
+            },
             { new: true } // Return the updated document
           );
-      
-      
-          // const io = req.app.locals.io;   
-          // io.emit('recordMessageIdDeleted', result.recordMessageId);
-
-          res.status(200).send({ mssg: 'Receiver ID removed successfully', recordMessageIdArray: result.recordMessageId,id:loginId });
+          res.status(200).send({ mssg: 'Receiver ID removed successfully', recordMessageIdArray: result.recordMessageId,id:loginId,messageNotify:result.messageNotify });
         } catch (e) {
           console.error(e);
           res.status(500).send({ mssg: 'Failed to delete receiver ID' });

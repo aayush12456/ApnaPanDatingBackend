@@ -91,6 +91,14 @@ io.on('connection', (socket) => {
         io.emit('recieveMessage',newMessage)
 
     })
+    socket.on('addDeactivateUser',(deactivatedUser)=>{
+        io.emit('getDeactivateUser',deactivatedUser)
+
+    })
+    socket.on('addActivateUser',(activateUser)=>{
+        io.emit('getDeactivateUser',activateUser)
+
+    })
     socket.on('addBlockUser',(blockUser)=>{
         io.emit('getBlockUser',blockUser)
     })
@@ -112,6 +120,14 @@ io.on('connection', (socket) => {
     })
     socket.on('deleteRecordMessageId',(newId)=>{
         io.emit('recieveRecordMessageId',newId)
+
+    })
+    // socket.on('addVisitorNotify',(newId)=>{
+    //     io.emit('getVisitorNotify',newId)
+
+    // })
+    socket.on('deleteVisitorNotify',(newId)=>{
+        io.emit('getVisitorCountUser',newId)
 
     })
     socket.on('disconnect', (reason) => {

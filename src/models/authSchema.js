@@ -269,12 +269,10 @@ selfOnlineLikeUser:[
     ref:'UserData'
   }
 ],
-deactivation:{
+selfDeactivation:{
   type:String
 },
-deactivatedId:{
-  type:String
-},
+
 songId:{
   type:String
 },
@@ -363,23 +361,35 @@ messageNotify: [
       type: mongoose.Schema.Types.ObjectId,
       ref: 'UserData',
     },
-    senderId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'UserData',
-    },
     recieverId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'UserData',
     },
-    chatId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'UserData',
-    },
-    senderName: {
+    recieverName: {
       type: String,
       ref: 'UserData',
     },
-    message: {
+   images:{
+    type:String
+   },
+
+    timestamp: {
+      type: Date,
+      required: true,
+    }
+  }
+],
+visitorNotify: [
+  {
+    loginId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'UserData',
+    },
+    visitorId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'UserData',
+    },
+    visitorName: {
       type: String,
       ref: 'UserData',
     },

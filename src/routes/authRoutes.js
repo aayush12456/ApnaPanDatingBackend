@@ -12,8 +12,7 @@ const upload = multer({
 });
 
 router.use(express.static('public'));
-// router.post('/signup', upload.fields([{ name: 'images', maxCount: 4 }, { name: 'videoUrl', maxCount: 1 }]), userController.register);
-router.post('/signup', userController.register);
+router.post('/signup', upload.fields([{ name: 'images', maxCount: 4 }, { name: 'videoUrl', maxCount: 1 }]), userController.register);
 router.post('/login', userController.login);
 router.get('/getAllLoginIdUser/:id', userController.getLoginIdUsers)
 router.post('/deleteLoginIdUser', userController.deleteLoginIdUser);
@@ -48,6 +47,9 @@ router.post('/addVisitorCount/:id', userController.addVisitorCountUser);
 router.get('/getVisitorCount/:id', userController.getVisitorCountUser);
 router.post('/deleteVisitorCount', userController.deleteVisitorCounterUser);
 router.post('/addVisitorSendEmail/:id', userController.addVisitorSendEmailUser);
+// router.post('/addVisitorNotify/:id',userController.addVisitorNotifyUser)
+// router.get('/getVisitorNotify/:id',userController.getVisitorNotifyUser)
+router.post('/deleteVisitorNotify/:id',userController.deleteVisitorNotifyUser)
 router.post('/addVisitorLikeUser/:id', userController.addVisitorLikeUser);
 router.get('/getVisitorLikeUser/:id', userController.getVisitorLikeUser);
 router.post('/addBlockChatIdUser/:id', userController.blockChatIdUser);
@@ -56,4 +58,7 @@ router.get('/getBlockChatIdUser/:id', userController.getBlockChatIdUser);
 router.post('/deleteBlockIdUser/:id', userController.deleteBlockUser );
 router.post('/updatePasswordUser/:id', userController.addUpdatePasswordUser);
 router.delete('/deleteProfileUser/:id', userController.deleteProfileUser);
+router.post('/addDeactivateUser/:id', userController.addDeactivationUser);
+router.get('/getDeactivateUser/:id', userController.getDeactivateUser);
+router.post('/getActivateUser/:id', userController.getActivateUser);
 module.exports = router;

@@ -5,9 +5,12 @@ const mongoose = require('mongoose');
 const cloudinary = require("cloudinary").v2;
 const twilio=require('twilio')
 const nodemailer = require('nodemailer');
+const moment = require('moment-timezone');
 const ObjectId = mongoose.Types.ObjectId;
 const dotenv=require('dotenv')
 const jwt = require("jsonwebtoken");
+const {sendEmail}=require('../controllers/emailConfig')
+const {sendTwilioMessage}=require('../controllers/twilloUtils')
 dotenv.config()
 const client = twilio(process.env.TWILIO_SID,process.env. TWILIO_AUTH_TOKEN);
 
@@ -23,95 +26,94 @@ cloudinary.config({
 //     api_secret: process.env.SONG_API_SECRET
 //   });
 exports.register = async (req, res) => {
-    // const cloudImageUrls = [];
-    // let cloudVideoUrl = '';
+    const cloudImageUrls = [];
+    let cloudVideoUrl = '';
 
-    // try {
-    //     // Upload images to Cloudinary
-    //     if (req.files.images) {
-    //         for (const file of req.files.images) {
-    //             const result = await cloudinary.uploader.upload(file.path, {
-    //                 folder: 'uploadImages'
-    //             });
+    try {
+        // Upload images to Cloudinary
+        if (req.files.images) {
+            for (const file of req.files.images) {
+                const result = await cloudinary.uploader.upload(file.path, {
+                    folder: 'uploadImages'
+                });
+                console.log('images in cloudinary',result)
+                if (!result || !result.secure_url) {
+                    throw new Error('Cloudinary image upload failed');
+                }
 
-    //             if (!result || !result.secure_url) {
-    //                 throw new Error('Cloudinary image upload failed');
-    //             }
+                cloudImageUrls.push(result.secure_url);
+            }
+        }
 
-    //             cloudImageUrls.push(result.secure_url);
-    //         }
-    //     }
-
-    //     // Upload video to Cloudinary
+        // Upload video to Cloudinary
        
 
-    //     // if (req.file) {
+        // if (req.file) {
             
-    //     //         const  videoResult = await cloudinary.uploader.upload(req.file.path, {
-    //     //             resource_type: 'video',
-    //     //                   folder: 'uploadVideos'
-    //     //         });
-    //     //         console.log('video result is',videoResult)
+        //         const  videoResult = await cloudinary.uploader.upload(req.file.path, {
+        //             resource_type: 'video',
+        //                   folder: 'uploadVideos'
+        //         });
+        //         console.log('video result is',videoResult)
 
-    //     //         if (!videoResult|| ! videoResult.secure_url) {
-    //     //             throw new Error('Cloudinary video upload failed');
-    //     //         }
+        //         if (!videoResult|| ! videoResult.secure_url) {
+        //             throw new Error('Cloudinary video upload failed');
+        //         }
 
-    //     //         cloudVideoUrl = videoResult.secure_url;
+        //         cloudVideoUrl = videoResult.secure_url;
           
-    //     // }
-    //     if (req.files.videoUrl) {
-    //         const videoFile = req.files.videoUrl[0];
-    //         const videoResult = await cloudinary.uploader.upload(videoFile.path, {
-    //             resource_type: 'video',
-    //             folder: 'uploadVideos'
-    //         });
+        // }
+        if (req.files.videoUrl) {
+            const videoFile = req.files.videoUrl[0];
+            const videoResult = await cloudinary.uploader.upload(videoFile.path, {
+                resource_type: 'video',
+                folder: 'uploadVideos'
+            });
 
-    //         if (!videoResult || !videoResult.secure_url) {
-    //             throw new Error('Cloudinary video upload failed');
-    //         }
+            if (!videoResult || !videoResult.secure_url) {
+                throw new Error('Cloudinary video upload failed');
+            }
 
-    //         cloudVideoUrl = videoResult.secure_url;
-    //     }
+            cloudVideoUrl = videoResult.secure_url;
+        }
 
 
-    //     const UserData = new authUser({
-    //         firstName: req.body.firstName,
-    //         email: req.body.email,
-    //         phone: req.body.phone,
-    //         password: req.body.password,
-    //         gender: req.body.gender,
-    //         DOB: req.body.DOB,
-    //         city: req.body.city,
-    //         aboutUser: req.body.aboutUser,
-    //         images: cloudImageUrls,
-    //         videoUrl: cloudVideoUrl,
-    //         interest: req.body.interest.split(','),
-    //         education: req.body.education,
-    //         drinking: req.body.drinking,
-    //         smoking: req.body.smoking,
-    //         eating: req.body.eating,
-    //         profession: req.body.profession,
-    //         looking: req.body.looking,
-    //         relationship: req.body.relationship,
-    //         zodiac: req.body.zodiac,
-    //         language: req.body.language,
-    //         songId:req.body.songId
-    //     });
+        const UserData = new authUser({
+            firstName: req.body.firstName,
+            email: req.body.email,
+            phone: req.body.phone,
+            password: req.body.password,
+            gender: req.body.gender,
+            DOB: req.body.DOB,
+            city: req.body.city,
+            aboutUser: req.body.aboutUser,
+            // images: cloudImageUrls,
+            videoUrl: cloudVideoUrl,
+            interest: req.body.interest.split(','),
+            education: req.body.education,
+            drinking: req.body.drinking,
+            smoking: req.body.smoking,
+            eating: req.body.eating,
+            profession: req.body.profession,
+            looking: req.body.looking,
+            relationship: req.body.relationship,
+            zodiac: req.body.zodiac,
+            language: req.body.language,
+            songId:req.body.songId
+        });
 
-    //     const token = await UserData.generateAuthToken();
-    //     const User = await UserData.save();
-    //     // const loginDataObj = new loginIdUser({
-    //     //     loginId: User._id.toString(),
-    //     //     loginEmail: User.email
-    //     //   });
-    //     // existingLoginData=  await loginDataObj.save();
-    //     res.status(201).send({ mssg: 'Data registered Successfully', user: User, token: token});
-    // } catch (e) {
-    //     console.error(e);
-    //     res.status(401).send({ mssg: 'Data does not added' });
-    // }
-    res.status(201).send({ mssg: 'Data registered Successfully'});
+        const token = await UserData.generateAuthToken();
+        const User = await UserData.save();
+        // const loginDataObj = new loginIdUser({
+        //     loginId: User._id.toString(),
+        //     loginEmail: User.email
+        //   });
+        // existingLoginData=  await loginDataObj.save();
+        res.status(201).send({ mssg: 'Data registered Successfully', user: User, token: token});
+    } catch (e) {
+        console.error(e);
+        res.status(401).send({ mssg: 'Data does not added' });
+    }
 };
 
 exports.login = async (req, res) => {
@@ -231,44 +233,118 @@ const generateRandomCode = () => {
     return Math.floor(10000 + Math.random() * 90000).toString();
 };
 
-exports.loginWithOtp=async (req,res)=>{
-    try{
-     const phone=req.body.phone
-     const reset=req.body.reset
-     const allUser=await authUser.find()
-     console.log('all user is',allUser)
-     const filterPhoneObjArray=allUser.filter((userItem)=>userItem.phone==phone)
-     const filterPhoneObj=filterPhoneObjArray[0]
-     if(!filterPhoneObj){
-        res.status(400).send({mssg:"please verify phone number"})
-        return
-  }
+// exports.loginWithOtp=async (req,res)=>{
+//     try{
+//      const phone=req.body.phone
+//      const reset=req.body.reset
+//      const allUser=await authUser.find()
+//      console.log('all user is',allUser)
+//      const filterPhoneObjArray=allUser.filter((userItem)=>userItem.phone==phone)
+//      const filterPhoneObj=filterPhoneObjArray[0]
+//      if(!filterPhoneObj){
+//         res.status(400).send({mssg:"please verify phone number"})
+//         return
+//   }
   
-  const randomCode = generateRandomCode(); 
-  let message=''
-  if(reset=='Reset Password'){
-    message=`Your reset Password OTP is ${randomCode}`
-  }
-  else{
-    message=`Your Login OTP is ${randomCode}`
-  }
-  await client.messages.create({
-    body:message,
-    //aayushtapadia28@gmail.com or aayushtapadia2001@gmail.com generate twillo phone number
-    // from: '+12513335644', // Your Twilio phone number
-    from: '+12185304074',
-    to: '+91'+filterPhoneObj.phone.toString() // Phone number of likeUserObj
-});
-filterPhoneObj.otp=randomCode
-    await filterPhoneObj.save();
-      res.status(201).send({mssg:'Login Successfully',otp:randomCode,phoneNumber:filterPhoneObj.phone})
+//   const randomCode = generateRandomCode(); 
+//   let message=''
+//   if(reset=='Reset Password'){
+//     message=`Your reset Password OTP is ${randomCode}`
+//   }
+//   else{
+//     message=`Your Login OTP is ${randomCode}`
+//   }
+  
+//   await client.messages.create({
+//     body:message,
+//     //aayushtapadia28@gmail.com or aayushtapadia2001@gmail.com generate twillo phone number
+//     // from: '+12513335644', // Your Twilio phone number
+//     from: '+12185304074',
+//     to: '+91'+filterPhoneObj.phone.toString() // Phone number of likeUserObj
+// });
+// filterPhoneObj.otp=randomCode
+//     await filterPhoneObj.save();
+//       res.status(201).send({mssg:'Login Successfully',otp:randomCode,phoneNumber:filterPhoneObj.phone})
     
    
-    }catch(e){
-        res.status(400).send({mssg:"Wrong login details. Please try again.",response:400})
+//     }catch(e){
+//         res.status(400).send({mssg:"Wrong login details. Please try again.",response:400})
+//     }
+// }
+exports.loginWithOtp = async (req, res) => {
+    try {
+      const phone = req.body.phone;
+      const reset = req.body.reset;
+      const allUser = await authUser.find();
+      console.log('all user is', allUser);
+  
+      const filterPhoneObjArray = allUser.filter((userItem) => userItem.phone == phone);
+      const filterPhoneObj = filterPhoneObjArray[0];
+  
+      if (!filterPhoneObj) {
+        res.status(400).send({ mssg: "Please verify phone number" });
+        return;
+      }
+  
+      const randomCode = generateRandomCode();
+      let message = '';
+      if (reset === 'Reset Password') {
+        message = `Your reset Password OTP is ${randomCode}`;
+      } else {
+        message = `Your Login OTP is ${randomCode}`;
+      }
+  
+      try {
+        // Attempt to send OTP via Twilio
+        await client.messages.create({
+          body: message,
+          from: '+12185304074', // Your Twilio phone number
+          to: '+91' + filterPhoneObj.phone.toString(), // User's phone number
+        });
+        console.log('OTP sent via Twilio');
+      } catch (twilioError) {
+        console.error('Twilio failed, attempting to send via email:', twilioError);
+  
+        // Set up email transporter
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: 'apnapan96@gmail.com',
+            pass: 'jqcz pymc zffw tmni', // Replace with your app password
+          },
+        });
+  
+        // Define email options
+        const mailOptions = {
+          from: 'apnapan96@gmail.com',
+          to: filterPhoneObj.email, // Ensure user has an email address in DB
+          subject: reset === 'Reset Password' ? 'ApnaPan Reset Password OTP' : 'ApnaPan Login OTP',
+          html: `<h1 style="text-align:center;">ApnaPan</h1>
+          <p  style="padding-top:1rem; font-size:1.2rem;">Hi ${filterPhoneObj.firstName},</p>
+          <p>${message}</p>
+          <p>please do not share with anyone</p>
+          `,
+        };
+  
+        // Send email
+        const emailResult = await transporter.sendMail(mailOptions);
+        console.log('OTP sent via Email:', emailResult);
+      }
+  
+      // Save the OTP in the database
+      filterPhoneObj.otp = randomCode;
+      await filterPhoneObj.save();
+  
+      res.status(201).send({
+        mssg: 'Login Successfully',
+        otp: randomCode,
+        phoneNumber: filterPhoneObj.phone,
+      });
+    } catch (e) {
+      console.error('Error:', e);
+      res.status(400).send({ mssg: "Wrong login details. Please try again.", response: 400 });
     }
-}
-
+  };
 exports.compareLoginWithOtp=async (req,res)=>{
     try{
      const OTP=req.body.otp
@@ -584,7 +660,49 @@ exports.addMatchUser = async (req, res) => {
           likeFilterArray:likeFilterArray,
           likesArray: likesArray,
       });
+    //   await client.messages.create({
+    //     body: `Congrats! ${userObj.firstName} just liked you now on ApnaPan checkout your likes`, // Your message here
+    //     // aayushtapadia28@gmail.co or aayushtapadia2001@gmail.com generated twillo phone number
+    //     // from: '+12513335644', // Your Twilio phone number
+    //     from: '+12185304074', // Your Twilio phone number
+    //     to: '+91'+anotherUserObj.phone.toString() // Phone number of likeUserObj
+    // });
+    const message = `Congrats! ${userObj.firstName} just liked you now on ApnaPan. Check out your likes!`;
+    const recipient = `+91${anotherUserObj.phone}`;
+    try {
+        // Attempt to send SMS
+        await sendTwilioMessage(recipient,message);
+      } catch (twilioError) {
+        console.error('Twilio SMS failed. Sending email as fallback:', twilioError.message);
+  
+        // Email content
+        const emailSubject = `Congrats, ${userObj.firstName} just liked you now on ApnaPan. Check out your likes!`;
+        const emailHtml = `
+          <h1 style="text-align:center; font-size:30px; font-weight:bold;">ApnaPan</h1>
+          <hr style="color:grey;"/>
+          <p style="padding-top:1rem; font-size:1.2rem;">Hi ${anotherUserObj.firstName},</p>
+          <p style="font-weight:bold; padding-top:1rem; font-size:1.2rem; color:black;">
+          Congrats, ${userObj.firstName} just liked you now on ApnaPan. Check out your likes!
+          </p>
+          <div style='display:flex; justify-content:center; margin-top:4rem;'>
+            <a href="https://apnapandating.netlify.app/" style="text-decoration:none;">
+              <button type='button' style="background-color:white; font-size:17px; font-weight:bold; color:green; height:45px; width:18rem; border-radius:25px; cursor:pointer; border-color: green;">
+                View and reply
+              </button>
+            </a>
+          </div>`;
+  
+        // Send fallback email
+        try {
+          await sendEmail(anotherUserObj.email, emailSubject, emailHtml);
+          console.log('Fallback email sent successfully to', anotherUserObj.email);
+        } catch (emailError) {
+          console.error('Failed to send fallback email:', emailError.message);
+        }
+      }
+    // await sendTwilioMessage(recipient, message);
 
+    
   } catch (error) {
       console.error(error);
       res.status(500).json({ mssg: "Internal server error" });
@@ -816,7 +934,6 @@ exports.addLikeMatchUser = async (req, res) => {
         // const matchUser = await matchUserObj.save();
 
         console.log('match person like', matchLikeUser);
-
         let matchLikeUserArray
         matchLikeUserArray = await authUser.find({  
             _id: { $in: matchLikeUser.matchUser }, 
@@ -829,7 +946,7 @@ exports.addLikeMatchUser = async (req, res) => {
             
         });
         // console.log('match User', matchUser);
-
+        
         res.json({
             matchLikes: matchLikeUserArray,
             // loginUser: userObj,
@@ -837,7 +954,17 @@ exports.addLikeMatchUser = async (req, res) => {
             anotherMatchLikes: anotherMatchLikeUserArray,
             // matchUserData: matchUser
         });
+        const emailSubject = `Hey ${anotherUserObj.firstName} ,${userObj.firstName} has paired with you mutually . View and respond`;
+        const emailHtml = `
+            <h1 style="text-Align:center; font-size:30px;font-weight:bold">ApnaPan</h1>
+            <hr style="color:grey;"/>
+            <p style="padding-top:1rem;font-size:1.2rem">Hi ${anotherUserObj.firstName},</p>
+            <p style="font-weight:bold; padding-top:1rem;font-size:1.2rem;color:black">${userObj.firstName} <span style="font-weight:normal;">and you are now connected.We are thrilled to discover this mutual interest between you.Feel free to login and explore there profile,this could mark the beginning of an intriguing journey.</span></p>
+            <div style='display:flex;justify-content:center;margin-top:4rem'>
+            <a href="https://apnapandating.netlify.app/" style="text-decoration:none;"> <button type='btn' style="background-color:white;font-size:17px;font-weight:bold;color:green;height:45px;width:18rem;border-radius:25px;cursor:pointer; border-color: green" >View and reply</button></a>
+            </div>`;
 
+        await sendEmail(anotherUserObj.email, emailSubject, emailHtml);
     } catch (error) {
         console.error(error);
         res.status(500).json({ mssg: "Internal server error" });
@@ -1016,7 +1143,47 @@ exports.addOnlineLikeUser=async(req,res)=>{ // function to store login user id i
                _id: { $in:onlinePersonLikeUser.selfOnlineLikeUser }
            })
              res.json({onlineLikeUser:onlineLikeUserArray,selfOnlineLikeUser:selfOnlineLikeUserArray})
-
+            //  await client.messages.create({
+            //     body: `Congrats! ${userObj.firstName} just liked you now on ApnaPan checkout your likes`, // Your message here
+            //     // aayushtapadia28@gmail.co or aayushtapadia2001@gmail.com generated twillo phone number
+            //     // from: '+12513335644', // Your Twilio phone number
+            //     from: '+12185304074', // Your Twilio phone number
+            //     to: '+91'+anotherUserObj.phone.toString() // Phone number of likeUserObj
+            // });
+            const message = `Congrats! ${userObj.firstName} just liked you now on ApnaPan. Check out your likes!`;
+            const recipient = `+91${anotherUserObj.phone}`;
+            try {
+                // Attempt to send SMS
+                await sendTwilioMessage(recipient,message);
+              } catch (twilioError) {
+                console.error('Twilio SMS failed. Sending email as fallback:', twilioError.message);
+          
+                // Email content
+                const emailSubject = `Congrats, ${userObj.firstName} just liked you now on ApnaPan. Check out your likes!`;
+                const emailHtml = `
+                  <h1 style="text-align:center; font-size:30px; font-weight:bold;">ApnaPan</h1>
+                  <hr style="color:grey;"/>
+                  <p style="padding-top:1rem; font-size:1.2rem;">Hi ${anotherUserObj.firstName},</p>
+                  <p style="font-weight:bold; padding-top:1rem; font-size:1.2rem; color:black;">
+                  Congrats, ${userObj.firstName} just liked you now on ApnaPan. Check out your likes!
+                  </p>
+                  <div style='display:flex; justify-content:center; margin-top:4rem;'>
+                    <a href="https://apnapandating.netlify.app/" style="text-decoration:none;">
+                      <button type='button' style="background-color:white; font-size:17px; font-weight:bold; color:green; height:45px; width:18rem; border-radius:25px; cursor:pointer; border-color: green;">
+                        View and reply
+                      </button>
+                    </a>
+                  </div>`;
+          
+                // Send fallback email
+                try {
+                  await sendEmail(anotherUserObj.email, emailSubject, emailHtml);
+                  console.log('Fallback email sent successfully to', anotherUserObj.email);
+                } catch (emailError) {
+                  console.error('Failed to send fallback email:', emailError.message);
+                }
+              }
+            // await sendTwilioMessage(recipient, message);
     }catch (error) {
         console.error(error);
         res.status(500).json({ mssg: "Internal server error" });
@@ -1085,7 +1252,7 @@ exports.addVisitorUser = async (req, res) => {
         const visitorExists = userObj.visitors.some(visitor => visitor.visitorId.toString() === visitorUserId);
 
         if (visitorExists) {
-            return res.status(400).json({ mssg: "Visitor already added" });
+           return
         }
 
         const visitorData = {
@@ -1094,13 +1261,40 @@ exports.addVisitorUser = async (req, res) => {
         };
         
         userObj.visitors.push(visitorData);
-        const visitorsUser = await userObj.save();
+    //     const visitorsUser = await userObj.save();
 
-        let visitorUserArray
-        visitorUserArray=await authUser.find({
-           _id: { $in:visitorsUser.visitors }
-       })
-        res.json({ visitors: visitorUserArray });
+    //     let visitorUserArray
+    //     visitorUserArray=await authUser.find({
+    //        _id: { $in:visitorsUser.visitors }
+    //    })
+       
+    //     res.json({ visitors: visitorUserArray });
+    await userObj.save();
+
+    // Get updated visitors
+    const visitorsUser = await authUser.find({
+        _id: { $in: userObj.visitors.map(visitor => visitor.visitorId) },
+    });
+
+    const formattedVisitors = userObj.visitors.map((visitor) => {
+        const visitorInfo = visitorsUser.find(
+            (u) => u._id.toString() === visitor.visitorId.toString()
+        );
+        return {
+            visitor: visitorInfo,
+            visitedAt: formatTimeDifference(new Date(visitor.visitedAt)),
+        };
+    });
+
+
+    // res.json({
+    //     visitors: visitorsUser.map(visitor => ({
+    //         visitor,
+    //         // visitedAt: new Date().toISOString(),
+    //         visitedAt: new Date()
+    //     })),
+    // });
+    res.json({ visitors: formattedVisitors })
     } catch (error) {
         console.error(error);
         res.status(500).json({ mssg: "Internal server error" });
@@ -1108,31 +1302,43 @@ exports.addVisitorUser = async (req, res) => {
 };
 
 
+// const formatTimeDifference = (date) => {
+//     const now = new Date();
+//     const diffMs = now - date;
+//     const diffSec = Math.floor(diffMs / 1000);
+//     const diffMin = Math.floor(diffSec / 60);
+//     const diffHrs = Math.floor(diffMin / 60);
+//     const diffDays = Math.floor(diffHrs / 24);
+
+//     if (diffMin < 60) return `${diffMin} minutes ago`;
+//     if (diffHrs < 24) return `${diffHrs} hours ago`;
+//     if (diffHrs === 1) return `yesterday`;
+    
+//     if (diffHrs > 28) {
+//         // Format the date as 'Month Day, Year'
+//         const options = { day: 'numeric', month: 'long', year: 'numeric' };
+//         return date.toLocaleDateString('en-US', options);
+//     }
+
+//     return `${diffDays} days ago`;
+// };
+// Example usage
+// const visitDate = new Date('2024-06-08T10:00:00Z');
+// console.log('format date', formatTimeDifference(visitDate));
 const formatTimeDifference = (date) => {
     const now = new Date();
     const diffMs = now - date;
-    const diffSec = Math.floor(diffMs / 1000);
-    const diffMin = Math.floor(diffSec / 60);
+    const diffMin = Math.floor(diffMs / 1000 / 60);
     const diffHrs = Math.floor(diffMin / 60);
     const diffDays = Math.floor(diffHrs / 24);
 
     if (diffMin < 60) return `${diffMin} minutes ago`;
     if (diffHrs < 24) return `${diffHrs} hours ago`;
-    if (diffHrs === 1) return `yesterday`;
+    if (diffDays === 1) return "yesterday";
     
-    if (diffHrs > 28) {
-        // Format the date as 'Month Day, Year'
-        const options = { day: 'numeric', month: 'long', year: 'numeric' };
-        return date.toLocaleDateString('en-US', options);
-    }
-
-    return `${diffDays} days ago`;
-};
-
-// Example usage
-const visitDate = new Date('2024-06-08T10:00:00Z');
-console.log('format date', formatTimeDifference(visitDate));
-
+    const options = { day: '2-digit', month: 'short', year: 'numeric' };
+    return new Intl.DateTimeFormat('en-GB', options).format(date);
+}
 
 exports.getVisitorUser = async (req, res) => {
     try {
@@ -1181,13 +1387,37 @@ exports.addVisitorCountUser = async (req, res) => {
       const id = req.params.id;
       const userId=req.body.visitorOnlineId
       const userObj = await authUser.findById(userId);
-      // console.log('user data obj',userObj)
+     const loginObj=await authUser.findById(id);
+     const indianTime = moment().tz('Asia/Kolkata').toISOString();
+     userObj.visitorNotify.push({loginId:id,visitorId:userId,visitorName:loginObj.firstName,images:loginObj.images[0],timestamp:indianTime})
+     const userObjSendMail = userObj.visitors.some(visitor => visitor.visitorId.toString() === id.toString());
+     if (userObjSendMail) {
+         return res.status(200).json({ message: 'Email not sent as the visitor already exists.' });
+       }
+    
+      if (!userObjSendMail) {
+        // Compose email details
+        const emailSubject = `Hey ${userObj.firstName} - there was a new visitor on your profile. Check them out`;
+        const emailHtml = `
+            <h1 style="text-Align:center; font-size:30px;font-weight:bold">ApnaPan</h1>
+            <hr style="color:grey;"/>
+            <p style="padding-top:1rem;font-size:1.2rem">Hi ${userObj.firstName},</p>
+            <p style="font-weight:bold; padding-top:1rem;font-size:1.2rem;color:black">${loginObj.firstName} <span style="font-weight:normal;">visited you / browse through your profile. Go check it out</span></p>
+            <div style='display:flex;justify-content:center;margin-top:4rem'>
+            <a href="https://apnapandating.netlify.app/" style="text-decoration:none;"> <button type='btn' style="background-color:green;font-size:17px;font-weight:bold;color:white;height:45px;width:18rem;border-radius:25px;cursor:pointer" >See your visitors</button></a>
+            </div>`;
+
+        await sendEmail(userObj.email, emailSubject, emailHtml);
+    }
+
       if (userObj) {
         userObj.visitorCounter = userObj.visitorCounter ? userObj.visitorCounter + 1 : 1; // Incrementing the counter value
+
         await userObj.save(); // Saving the updated userObj
-      //   io.emit('new counter', { userId: userId, counter: userObj.counter });
+
         console.log('Updated userObj:', userObj);
-        res.status(200).send({ message: 'visitor Counter incremented successfully', userObj:userObj });
+        const userObjWithId = { ...userObj.toObject(), id: userId };
+        res.status(200).send({ message: 'visitor Counter incremented successfully', userObj:userObjWithId });
       } 
    
       else {
@@ -1241,7 +1471,24 @@ exports.addVisitorCountUser = async (req, res) => {
         const userId = req.params.id; 
         const user = await authUser.findById(userId);
         console.log('get visitor count user is',user.visitorCounter)
-        res.json({userObj:user });
+        const visitorNotifyArray=user.visitorNotify
+      const fiveSecondsAgo = moment().subtract(30, 'seconds').toDate();
+    const updatedUser = await authUser.findByIdAndUpdate(
+      userId,
+      {
+        $pull: {
+          visitorNotify: { timestamp: { $lt: fiveSecondsAgo } },
+        },
+      },
+      { new: true } // Return the updated document
+    );
+
+    // Check if user exists
+    if (!updatedUser) {
+      return res.status(404).send({ mssg: 'User not found' });
+    }
+    const userObjWithId = { ...user.toObject(), id: userId };
+        res.json({userObj:userObjWithId });
      
     } catch (error) {
     console.error('Error:', error);
@@ -1265,8 +1512,8 @@ exports.deleteVisitorCounterUser = async (req, res) => {
             console.log('visitor Counter deleted for user:', user);
             const io = req.app.locals.io;
             io.emit('deleteVisitorCount', user.visitorCounter);
-         
-            res.status(200).send({ message: 'visitor Counter deleted successfully', userObj:user });
+            const userObjWithId = { ...user.toObject(), id: userId };    
+            res.status(200).send({ message: 'visitor Counter deleted successfully', userObj:userObjWithId });
         } else {
             res.status(404).send({ message: 'User not found' });
         }
@@ -1295,7 +1542,7 @@ exports.addVisitorSendEmailUser = async (req, res) => {
             service: 'gmail',
             auth: {
                 user: 'apnapan96@gmail.com',
-                pass: 'nmhlhhjvahmjqmlz'
+                pass: 'jqcz pymc zffw tmni'
             }
         });
 
@@ -1323,6 +1570,104 @@ exports.addVisitorSendEmailUser = async (req, res) => {
     }
 };
 
+// exports.addVisitorNotifyUser = async (req, res) => {
+//     try {
+//       const loginId = req.params.id;
+//       const visitorId=req.body.visitorId
+//       const visitorObj = await authUser.findById(visitorId);
+//       const loginObj = await authUser.findById(loginId);
+//       // console.log('user data obj',userObj)
+//       const indianTime = moment().tz('Asia/Kolkata').toISOString();
+//     visitorObj.visitorNotify.push({loginId:loginId,visitorId:visitorId,visitorName:loginObj.firstName,images:loginObj.images[0],timestamp:indianTime})
+//     const userObjSendMail = visitorObj.visitors.some(visitor => visitor.visitorId.toString() === loginId.toString());
+//     if (userObjSendMail) {
+//         return res.status(200).json({ message: 'Email not sent as the visitor already exists.' });
+//       }
+  
+//     const transporter = nodemailer.createTransport({
+//         service: 'gmail',
+//         auth: {
+//             user: 'apnapan96@gmail.com',
+//             pass: 'jqcz pymc zffw tmni'
+//         }
+//     });
+
+//     // Set up email options
+//     const mailOptions = {
+//         from: 'apnapan96@gmail.com',
+//         to: visitorObj.email,
+//         subject: `Hey ${visitorObj.firstName} - there was a new visitor on your profile. Check them out`,
+//         html: `<h1 style="text-Align:center; font-size:30px;font-weight:bold">ApnaPan</h1>
+//         <hr style="color:grey;"/>
+//         <p style="padding-top:1rem;font-size:1.2rem">Hi ${visitorObj.firstName},</p>
+//         <p style="font-weight:bold; padding-top:1rem;font-size:1.2rem;color:black">${loginObj.firstName} <span style="font-weight:normal;">visited you / browse through your profile.Go check it out</span></p>
+//         <div style='display:flex;justify-content:center;margin-top:4rem'>
+//         <a href="https://apnapandating.netlify.app/" style="text-decoration:none;"> <button type='btn' style="background-color:green;font-size:17px;font-weight:bold;color:white;height:45px;width:18rem;border-radius:25px;cursor:pointer" >See your visitors</button></a>
+//         </div>`
+//     };
+
+//     // Send the email
+//     const result = await transporter.sendMail(mailOptions);
+//     console.log('Email sent: ', result);
+//       await visitorObj.save()
+//       res.status(200).json({ mssg: "add visitor notify" ,visitorNotify:visitorObj.visitorNotify,id:visitorId});
+//     } catch (error) {
+//       console.error('Error:', error);
+//       res.status(500).send({ message: 'Internal server error' });
+//     }
+//   };
+//   exports.getVisitorNotifyUser = async (req, res) => {
+//     try {
+//       const loginId = req.params.id;
+//       const loginObj = await authUser.findById(loginId);
+//       const visitorNotifyArray=loginObj.visitorNotify
+//       const fiveSecondsAgo = moment().subtract(30, 'seconds').toDate();
+//     const updatedUser = await authUser.findByIdAndUpdate(
+//       loginId,
+//       {
+//         $pull: {
+//           visitorNotify: { timestamp: { $lt: fiveSecondsAgo } },
+//         },
+//       },
+//       { new: true } // Return the updated document
+//     );
+
+//     // Check if user exists
+//     if (!updatedUser) {
+//       return res.status(404).send({ mssg: 'User not found' });
+//     }
+//       res.status(200).json({ mssg: " get visitor notify" ,visitorNotify:visitorNotifyArray,id:loginId});
+//     } catch (error) {
+//       console.error('Error:', error);
+//       res.status(500).send({ message: 'Internal server error' });
+//     }
+//   };
+  
+exports.deleteVisitorNotifyUser = async (req, res) => {
+    try {
+      const loginId = req.params.id;
+      const visitorId=req.body.visitorOnlineId
+      const result = await authUser.findOneAndUpdate( // multiple field se kuch delete karna ho to findOneAndUpdate
+        { _id: loginId }, // Find the document by loginId
+        { 
+          $pull: { 
+            visitorNotify: { loginId: visitorId } // Remove object from messageNotify array
+          } 
+        },
+        { new: true } // Return the updated document
+      );
+    // const result = await authUser.findByIdAndUpdate(
+    //     loginId, // Find the document by loginId
+    //     { $pull: {  visitorNotify: visitorId } }, // Remove recieverId from recordMessageId array
+    //     { new: true } // Return the updated document
+    //   );
+    const userObjWithId = { ...result.toObject(), id: loginId };
+      res.status(200).json({ mssg: " delete visitor notify" ,userObj:userObjWithId});
+    } catch (error) {
+      console.error('Error:', error);
+      res.status(500).send({ message: 'Internal server error' });
+    }
+  };
 exports.addVisitorLikeUser=async(req,res)=>{ // function to store login user id in a like user
     try{
         const personUserId=req.body.visitorPlusLikeUserId // like user id
@@ -1594,7 +1939,6 @@ exports.addUpdatePasswordUser = async (req, res) => {
             { 'skipUser': id },
             { 'matchUser': id },
             { 'anotherMatchUser': id },
-            { 'anotherMatchData': id },
             { 'anotherLikeUser': id },
             { 'hideRemainMatch': id },
             { 'onlineLikeUser': id },
@@ -1614,9 +1958,7 @@ exports.addUpdatePasswordUser = async (req, res) => {
             skipUser: id,
             matchUser:id,
             anotherMatchUser:id,
-            anotherMatchData:id,
             anotherLikeUser:id,
-            hideRemainMatch:id,
             onlineLikeUser:id,
             likeMatch:id,
             anotherLikeMatch:id,
@@ -1631,3 +1973,73 @@ exports.addUpdatePasswordUser = async (req, res) => {
       res.status(500).json({ msg: "Internal server error" });
     }
   };
+  exports.addDeactivationUser=async(req,res)=>{ // function to store login user id in a like user
+    try{
+        const loginUserId = req.params.id; // login user id
+        const deactivate=req.body.deactivate
+        const userObj = await authUser.findById(loginUserId);
+        if (!userObj) {
+                 return res.status(404).json({ mssg: "User not found" });
+             }
+        userObj.selfDeactivation=loginUserId
+        const allUserArray=await authUser.find()
+        for(let data of allUserArray){
+            if (data._id.toString() === loginUserId) {
+                continue; // Skip if the current user's ID matches loginUserId
+              }
+              if (
+                (userObj.gender === "Male" && data.gender === "Female") ||
+                (userObj.gender === "Female" && data.gender === "Male")
+              ) {
+                // Add loginUserId to deactivatedIdArray if condition is met
+                data.deactivatedIdArray.push(loginUserId);
+                await data.save(); // Save changes for this user
+              }
+        }
+            
+      await userObj.save()
+      res.status(200).json({ msg: "User deacctivated successfully",selfDeactivate:userObj.selfDeactivation,deactivatedIdArray:userObj.deactivatedIdArray })
+    }catch (error) {
+        console.error(error);
+        res.status(500).json({ mssg: "Internal server error" });
+    }
+}
+exports.getDeactivateUser = async (req, res) => {
+    try {
+        const userId = req.params.id; // login user id
+        const userObj = await authUser.findById(userId);
+        
+        if (!userObj) {
+            return res.status(404).json({ mssg: "User not found" });
+        }
+        res.json({ msg: "User get deacctivated successfully",selfDeactivate:userObj.selfDeactivation,deactivatedIdArray:userObj.deactivatedIdArray});
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ mssg: "Internal server error" });
+    }
+};
+exports.getActivateUser = async (req, res) => {     
+  try {
+      const userId = req.params.id; // login user id
+      const activate=req.body.activate
+      const userObj = await authUser.findById(userId);
+      
+      if (!userObj) {
+          return res.status(404).json({ mssg: "User not found" });
+      }
+      
+     userObj.selfDeactivation=null
+
+   
+     await authUser.updateMany( // ye keval data delete karne ke liye
+         { 'deactivatedIdArray': userId },
+         { $pull: { deactivatedIdArray:userId } }
+       );
+       await userObj.save()
+      
+      res.json({ msg: "User activate successfully",selfDeactivate:userObj.selfDeactivation,deactivatedIdArray:userObj.deactivatedIdArray});
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ mssg: "Internal server error" });
+  }
+};
