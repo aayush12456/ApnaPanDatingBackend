@@ -26,58 +26,38 @@ cloudinary.config({
 //     api_secret: process.env.SONG_API_SECRET
 //   });
 exports.register = async (req, res) => {
-    const cloudImageUrls = [];
-    let cloudVideoUrl = '';
-
+  let cloudImageUrls = [];
+  let cloudVideoUrl = '';
     try {
-        // Upload images to Cloudinary
-        if (req.files.images) {
-            for (const file of req.files.images) {
-                const result = await cloudinary.uploader.upload(file.path, {
-                    folder: 'uploadImages'
-                });
-                console.log('images in cloudinary',result)
-                if (!result || !result.secure_url) {
-                    throw new Error('Cloudinary image upload failed');
-                }
-
-                cloudImageUrls.push(result.secure_url);
-            }
-        }
-
-        // Upload video to Cloudinary
-       
-
-        // if (req.file) {
-            
-        //         const  videoResult = await cloudinary.uploader.upload(req.file.path, {
-        //             resource_type: 'video',
-        //                   folder: 'uploadVideos'
-        //         });
-        //         console.log('video result is',videoResult)
-
-        //         if (!videoResult|| ! videoResult.secure_url) {
-        //             throw new Error('Cloudinary video upload failed');
-        //         }
-
-        //         cloudVideoUrl = videoResult.secure_url;
-          
-        // }
-        if (req.files.videoUrl) {
-            const videoFile = req.files.videoUrl[0];
-            const videoResult = await cloudinary.uploader.upload(videoFile.path, {
-                resource_type: 'video',
-                folder: 'uploadVideos'
+      console.log("Uploaded file:", req.files.images);
+      console.log("Uploaded video file", req.files.videoUrl);
+      if (req.files.images) {
+        for (const file of req.files.images) {
+            const result = await cloudinary.uploader.upload(file.path, {
+                folder: 'uploadImages'
             });
 
-            if (!videoResult || !videoResult.secure_url) {
-                throw new Error('Cloudinary video upload failed');
+            if (!result || !result.secure_url) {
+                throw new Error('Cloudinary image upload failed');
             }
 
-            cloudVideoUrl = videoResult.secure_url;
+            cloudImageUrls.push(result.secure_url);
         }
+    }
+    if (req.files.videoUrl) {
+      for (const videoFile of req.files.videoUrl) {
+          const videoResult = await cloudinary.uploader.upload(videoFile.path, {
+              folder: 'uploadVideos',
+              resource_type: 'video',
+          });
 
+          if (!videoResult || !videoResult.secure_url) {
+              throw new Error('Cloudinary video upload failed');
+          }
 
+          cloudVideoUrl = videoResult.secure_url;
+      }
+  }
         const UserData = new authUser({
             firstName: req.body.firstName,
             email: req.body.email,
@@ -87,7 +67,7 @@ exports.register = async (req, res) => {
             DOB: req.body.DOB,
             city: req.body.city,
             aboutUser: req.body.aboutUser,
-            // images: cloudImageUrls,
+            images: cloudImageUrls,
             videoUrl: cloudVideoUrl,
             interest: req.body.interest.split(','),
             education: req.body.education,
@@ -99,17 +79,18 @@ exports.register = async (req, res) => {
             relationship: req.body.relationship,
             zodiac: req.body.zodiac,
             language: req.body.language,
-            songId:req.body.songId
+            songId:req.body.songId,
         });
 
         const token = await UserData.generateAuthToken();
+        console.log('userData',UserData)
         const User = await UserData.save();
         // const loginDataObj = new loginIdUser({
         //     loginId: User._id.toString(),
         //     loginEmail: User.email
         //   });
         // existingLoginData=  await loginDataObj.save();
-        res.status(201).send({ mssg: 'Data registered Successfully', user: User, token: token});
+        res.status(201).send({ mssg: 'Data registered Successfully',token: token,registerUser:User});
     } catch (e) {
         console.error(e);
         res.status(401).send({ mssg: 'Data does not added' });
