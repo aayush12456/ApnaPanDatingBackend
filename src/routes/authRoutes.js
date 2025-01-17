@@ -61,4 +61,8 @@ router.delete('/deleteProfileUser/:id', userController.deleteProfileUser);
 router.post('/addDeactivateUser/:id', userController.addDeactivationUser);
 router.get('/getDeactivateUser/:id', userController.getDeactivateUser);
 router.post('/getActivateUser/:id', userController.getActivateUser);
+router.post('/addSelectedSong/:id', userController.addSelectedSong);
+router.post('/uploadSong', upload.fields([{ name: 'songImage', maxCount: 1 }, { name: 'songUrl', maxCount: 1 }]), userController.uploadSongs);
+router.get('/getUploadSong/:id', userController.getUploadSong);
+router.post('/addNoneSong/:id', userController.addNoneSong);
 module.exports = router;

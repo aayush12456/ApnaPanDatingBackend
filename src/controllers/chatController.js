@@ -186,9 +186,6 @@ exports.addChat = async (req, res) => {
   exports.getSendMessage=async(req,res)=>{
     try{
         const id=req.params.id
-      //   const fiveMinutesAgo = moment().subtract(5, 'minutes').toDate();
-      // await ChatUser.deleteMany({ timestamp: { $lt: fiveMinutesAgo } });
-      // console.log('Old messages deleted successfully');
         const allChatArray=await ChatUser.find()
         console.log('login chat data obj',allChatArray)
         let filterChatArray

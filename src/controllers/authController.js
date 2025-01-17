@@ -11,6 +11,7 @@ const dotenv=require('dotenv')
 const jwt = require("jsonwebtoken");
 const {sendEmail}=require('../controllers/emailConfig')
 const {sendTwilioMessage}=require('../controllers/twilloUtils')
+const uploadSongs=require('../models/songSchema')
 dotenv.config()
 const client = twilio(process.env.TWILIO_SID,process.env. TWILIO_AUTH_TOKEN);
 
@@ -107,9 +108,12 @@ exports.login = async (req, res) => {
       res.status(400).send({ mssg: "Email does not exist", response: 400 });
       return;
     }
+    const indianTime = moment().tz('Asia/Kolkata').toISOString();
     const loginIdObj=new loginIdUser({
         loginId:userEmail._id,
-        loginEmail:userEmail.email
+        loginEmail:userEmail.email,
+        timestamp: indianTime 
+
     })
     await loginIdObj.save()
     const isMatch = await bcrypt.compare(password, userEmail.password);
@@ -159,13 +163,16 @@ exports.login = async (req, res) => {
 exports.getLoginIdUsers=async(req,res)=>{
     try{
     const id=req.params.id
+
     const loginIdUserData=await loginIdUser.find()
+
     const loginIdUserArray=loginIdUserData.filter((loginItem)=>loginItem.loginId!==id)
     const loginIds = loginIdUserArray.map((loginItem) => loginItem.loginId);
     const loginUserArray=await authUser.find({
         _id:{$in:loginIds}
     })
     res.json({loginIdUserArray:loginIds,loginUserArray:loginUserArray})
+
     }catch(e){
             res.status(404).send({mssg:'internal server error'})
         }
@@ -395,7 +402,8 @@ exports.completeAllUser = async (req, res) => {
         const userId = req.params.id;
         const allUser=await authUser.find()
         const allPhoneNumberArray=allUser.map((item)=>item.phone)
-        res.status(201).send({mssg:"phone number array",phoneNumberArray:allPhoneNumberArray})
+        const allEmailArray=allUser.map((item)=>item.email)
+        res.status(201).send({mssg:"phone number array",phoneNumberArray:allPhoneNumberArray,emailArray:allEmailArray})
     }catch(e){
         res.status(400).send({mssg:"Wrong details. Please try again.",response:400})
     }
@@ -1898,8 +1906,26 @@ exports.addUpdatePasswordUser = async (req, res) => {
   exports.deleteProfileUser = async (req, res) => {
     try {
       const id = req.params.id;
-      const deletedUser = await authUser.findByIdAndDelete(id);
+      const userObj=await authUser.findById(id)
+      if (!userObj) {
+        return res.status(404).json({ msg: "User not found" });
+      }
   
+      // Delete the video from Cloudinary
+      if (userObj.videoUrl) {
+        const videoUrl = userObj.videoUrl;
+        const publicId = videoUrl.split('/').slice(-2).join('/').split('.')[0];
+        await cloudinary.uploader.destroy(publicId, { resource_type: 'video' });
+      }
+      if (userObj.images && Array.isArray(userObj.images)) {
+        for (const imageUrl of userObj.images) {
+          const publicId = imageUrl.split('/').slice(-2).join('/').split('.')[0];
+          await cloudinary.uploader.destroy(publicId, { resource_type: 'image' });
+        }
+      }
+  
+       const deletedUser = await authUser.findByIdAndDelete(id);
+     
       if (!deletedUser) {
         return res.status(404).json({ msg: "User not found" });
       }
@@ -2024,3 +2050,97 @@ exports.getActivateUser = async (req, res) => {
       res.status(500).json({ mssg: "Internal server error" });
   }
 };
+
+exports.addSelectedSong=async(req,res)=>{ // function to update user
+  try{
+      const id=req.params.id
+     const songId=req.body.songId
+     const loginObj = await authUser.findById(id)
+     if (!loginObj) {
+              return res.status(404).json({ mssg: "User not found" });
+          }
+     loginObj.songId=songId
+  const loginUserObj=await loginObj.save()
+  res.json({loginUser:loginUserObj})
+  }catch(e){
+      res.status(404).send({mssg:'internal server error'})
+  }
+}
+exports.uploadSongs = async (req, res) => {
+  let songUrl = '';
+  let songImage = ''
+  try {
+
+      if (req.files.songUrl && req.files.songUrl.length > 0) { 
+          const audioFile = req.files.songUrl[0]; 
+          console.log('Audio file:', audioFile);
+
+          const audioResult = await  cloudinary.uploader.upload(audioFile.path, {
+              resource_type: 'raw', // Use 'raw' for audio files
+              folder: 'uploadAudios', // Folder in Cloudinary
+              format: 'mp3' // Ensures the file is treated as an MP3
+          });
+
+          if (!audioResult || !audioResult.secure_url) {
+              throw new Error('Cloudinary audio upload failed');
+          }
+
+          songUrl = audioResult.secure_url;
+      } else {
+          console.log('No audio file provided');
+          throw new Error('No audio file provided');
+      }
+      
+      if (req.files.songImage) {
+          for (const file of req.files.songImage) {
+              const result = await cloudinary.uploader.upload(file.path, {
+                  folder: 'uploadSongImages'
+              });
+
+              if (!result || !result.secure_url) {
+                  throw new Error('Cloudinary song image upload failed');
+              }
+
+              songImage=result.secure_url
+          }
+      }
+      // Save the song data to MongoDB
+      const songUploadData = new uploadSongs({
+          songName: req.body.songName,
+          songUrl: songUrl, // Save the Cloudinary URL in MongoDB
+          songImage:songImage
+      });
+
+      const songUploaded = await songUploadData.save();
+      res.status(201).send({ mssg: 'Song data uploaded successfully', songUpload: songUploaded });
+  } catch (e) {
+      console.error(e);
+      res.status(401).send({ mssg: e.message });
+  }
+};
+
+exports.getUploadSong=async(req,res)=>{ // function to update user
+  try{
+      const id=req.params.id
+     const getUploadData=await uploadSongs.find()
+     console.log('get upload',getUploadData)
+  res.json({uploadSongsData:getUploadData})
+  }catch(e){
+      res.status(404).send({mssg:'internal server error'})
+  }
+}
+exports.addNoneSong=async(req,res)=>{ // function to update user
+  try{
+      const id=req.params.id
+      const songId=req.body.songId
+     const loginObj = await authUser.findById(id)
+     if (!loginObj) {
+              return res.status(404).json({ mssg: "User not found" });
+          }
+     loginObj.songId=songId
+  const loginUserObj=await loginObj.save()
+  res.json({loginUser:loginUserObj})
+  }catch(e){
+      res.status(404).send({mssg:'internal server error'})
+  }
+}

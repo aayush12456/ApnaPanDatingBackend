@@ -25,5 +25,6 @@ const chatSchema = mongoose.Schema({
         default: Date.now  // Automatically sets the timestamp to the current time
     }
 })
+chatSchema.index({ timestamp: 1 }, { expireAfterSeconds: 300 });
 const chatUploads = new mongoose.model("chatUser", chatSchema);
 module.exports = chatUploads;
