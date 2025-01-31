@@ -143,7 +143,7 @@ exports.login = async (req, res) => {
       res.status(201).send({
         mssg: 'Login Successfully',
         response: 201,
-        loginData: { name:data.firstName,image:data.images[0],gender:data.gender,_id:userEmail._id },
+        loginData: { name:data.firstName,image:data.images[0],gender:data.gender,_id:userEmail._id,dob:data.DOB },
         token: token,
         userId: userEmail._id,
         completeLoginData:data,
@@ -361,8 +361,16 @@ exports.compareLoginWithOtp=async (req,res)=>{
      console.log('login token is',token)
      OTPPhoneObj.otp=''
      await OTPPhoneObj.save()
+     const indianTime = moment().tz('Asia/Kolkata').toISOString();
+    const loginIdObj=new loginIdUser({
+        loginId:OTPPhoneObj._id,
+        loginEmail:OTPPhoneObj.email,
+        timestamp: indianTime 
+
+    })
+    await loginIdObj.save()
       res.status(201).send({mssg:'Login Successfully', response:201,token:token,userId:OTPPhoneObj._id,
-      loginData: { name:OTPPhoneObj.firstName,image:OTPPhoneObj.images[0],gender:OTPPhoneObj.gender,_id:OTPPhoneObj._id },
+      loginData: { name:OTPPhoneObj.firstName,image:OTPPhoneObj.images[0],gender:OTPPhoneObj.gender,_id:OTPPhoneObj._id,dob:OTPPhoneObj.DOB },
       completeLoginData:OTPPhoneObj
     })
     }catch(e){
@@ -424,6 +432,7 @@ exports.updateauthUser=async(req,res)=>{ // function to update user
 }
 
 
+
 exports.allUser = async (req, res) => {
   try {
       const userId = req.params.id;
@@ -434,7 +443,7 @@ exports.allUser = async (req, res) => {
           return res.status(404).json({ message: "User not found" });
       }
 
-      const city = user.city;
+      const city = user.city.trim();
       const gender = user.gender;
       const visitors = user.visitors.map(visitor => visitor.visitorId.toString()); // Assuming visitors is an array of ObjectIds
       const likes = user.likes.map(like => like.toString());
@@ -445,7 +454,7 @@ exports.allUser = async (req, res) => {
       const users = await authUser.find();
 
       // Filter out users with the same city and opposite gender
-      let filteredUsers = users.filter(u => u.city !== city);
+      let filteredUsers = users.filter(u => u.city.trim() !== city);
 
       if (gender === 'Male') {
           filteredUsers = filteredUsers.filter(u => u.gender === 'Female');
@@ -483,29 +492,15 @@ exports.getFilterUser = async (req, res) => {
           return res.status(404).json({ mssg: "User not found" });
       }
 
-      const filterUserArray = user.filterData;
-      console.log('filter user array ', filterUserArray);
-
-      const matchFilterUserArray = user.likeFilterData;
-      console.log('like filter user array', matchFilterUserArray);
-
-      const anotherMatchFilterUserArray = user.likes;
-      console.log('like filter user array', anotherMatchFilterUserArray);
-
-      const userInterests = user.interest; // Get interests of the user
+      const filterUserArray = user.filterData || [];
+      const matchFilterUserArray = user.likeFilterData || [];
+      const anotherMatchFilterUserArray = user.likes || [];
       const userGender = user.gender;
       const userCity = user.city; // Get city of the user
+      const formattedCity = userCity.trim(); 
       console.log('gender is', userGender);
       console.log('city is', userCity);
 
-      // const hideRemainMatchArray = user.hideRemainMatch;
-      // console.log('hide remain match array', hideRemainMatchArray);
-
-      // Fetch the full user objects for the IDs in hideRemainMatchArray
-      // const hideRemainMatchUsers = await authUser.find({
-      //     _id: { $in: hideRemainMatchArray }
-      // });
-      // console.log('hide remain match users', hideRemainMatchUsers);
 
       let interestUsers;
       
@@ -513,18 +508,16 @@ exports.getFilterUser = async (req, res) => {
           // Find females with at least one similar interest, matching city, and not in filterUserArray or likeFilterUserArray
           interestUsers = await authUser.find({ 
               gender: 'Female', 
-              interest: { $in: userInterests },
-              city: userCity,
-              // _id: { $nin: [...filterUserArray, ...likeFilterUserArray] }
+              // city: userCity,
+              city: { $regex: new RegExp(`^${formattedCity}$`, "i") }, // Case-insensitive city match
               _id: { $nin: [...filterUserArray,...matchFilterUserArray,...anotherMatchFilterUserArray] }
           });
       } else if (userGender === 'Female') {
           // Find males with at least one similar interest, matching city, and not in filterUserArray or likeFilterUserArray
           interestUsers = await authUser.find({ 
               gender: 'Male', 
-              interest: { $in: userInterests },
-              city: userCity,
-              // _id: { $nin: [...filterUserArray, ...likeFilterUserArray] }
+              // city: userCity,
+              city: { $regex: new RegExp(`^${formattedCity}$`, "i") }, // Case-insensitive city match
               _id: { $nin: [...filterUserArray,...matchFilterUserArray,...anotherMatchFilterUserArray] }
           });
       } else {
@@ -545,7 +538,46 @@ exports.getFilterUser = async (req, res) => {
       res.status(500).json({ mssg: "Internal server error" });
   }
 };
+// exports.getFilterUser = async (req, res) => {
+//   try {
+//       const userId = req.params.id;
+//       const user = await authUser.findById(userId);
 
+//       // Check if the user exists
+//       if (!user) {
+//           return res.status(404).json({ message: "User not found" });
+//       }
+
+//       const city = user.city;
+//       const gender = user.gender;
+//       const filterUserArray = user.filterData.map(filter=>filter.toString());
+//       const matchFilterUserArray = user.likeFilterData.map(likeFilter=>likeFilter.toString()) 
+//       const anotherMatchFilterUserArray = user.likes.map(like=>like.toString())
+
+//       const users = await authUser.find();
+
+//       // Filter out users with the same city and opposite gender
+//       let interestUsers  = users.filter(u => u.city !== city);
+
+//       if (gender === 'Male') {
+//         interestUsers  = interestUsers .filter(u => u.gender === 'Female');
+//       } else {
+//         interestUsers  = interestUsers .filter(u => u.gender === 'Male');
+//       }
+
+//       // Remove users from filteredUsers if they are present in the visitors array
+//       interestUsers  = interestUsers .filter(u => !filterUserArray.includes(u._id.toString()));
+//       interestUsers  = interestUsers .filter(u => !matchFilterUserArray.includes(u._id.toString()));
+//       interestUsers  = interestUsers .filter(u => !anotherMatchFilterUserArray.includes(u._id.toString()));
+
+
+//       res.json({
+//         interestUsers 
+//       });
+//   } catch (error) {
+//       res.status(500).json({ message: "Internal server error" });
+//   }
+// }
 exports.addSkipUser = async (req, res) => { // if you want to unlike user that unlike user id store in a database with the help of these func
   try {
       const userId = req.params.id; // login person  userId
@@ -938,8 +970,8 @@ exports.addLikeMatchUser = async (req, res) => {
         
         res.json({
             matchLikes: matchLikeUserArray,
-            // loginUser: userObj,
-            // anotherLoginUser: anotherUserObj,
+            loginUser: userObj,
+            anotherLoginUser: anotherUserObj,
             anotherMatchLikes: anotherMatchLikeUserArray,
             // matchUserData: matchUser
         });
@@ -2066,6 +2098,16 @@ exports.addSelectedSong=async(req,res)=>{ // function to update user
       res.status(404).send({mssg:'internal server error'})
   }
 }
+exports.getSelectedSong=async(req,res)=>{ // function to update user
+  try{
+      const id=req.params.id
+     const getSongLoginData=await authUser.findById(id)
+     console.log('get selected song',getSongLoginData)
+  res.json({loginUser:getSongLoginData})
+  }catch(e){
+      res.status(404).send({mssg:'internal server error'})
+  }
+}
 exports.uploadSongs = async (req, res) => {
   let songUrl = '';
   let songImage = ''
@@ -2140,6 +2182,22 @@ exports.addNoneSong=async(req,res)=>{ // function to update user
      loginObj.songId=songId
   const loginUserObj=await loginObj.save()
   res.json({loginUser:loginUserObj})
+  }catch(e){
+      res.status(404).send({mssg:'internal server error'})
+  }
+}
+
+exports.addDarkMode=async(req,res)=>{ // function to update user
+  try{
+      const id=req.params.id
+      const appearMode=req.body.mode
+     const loginObj = await authUser.findById(id)
+     if (!loginObj) {
+              return res.status(404).json({ mssg: "User not found" });
+          }
+     loginObj.appearanceMode=appearMode
+  const loginUserObj=await loginObj.save()
+  res.json({loginUpdateUser:loginUserObj})
   }catch(e){
       res.status(404).send({mssg:'internal server error'})
   }

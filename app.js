@@ -130,6 +130,10 @@ io.on('connection', (socket) => {
         io.emit('getVisitorCountUser',newId)
 
     })
+    socket.on('addSongObj',(newId)=>{
+        io.emit('getSongObj',newId)
+
+    })
     socket.on('disconnect', (reason) => {
         console.log('A user disconnected with socket ID:', socket.id,'reason is',reason);
     });

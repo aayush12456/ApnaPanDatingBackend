@@ -137,7 +137,9 @@ images: [{
   likeNotify:{
     type:String
   },
- 
+ appearanceMode:{
+  type:String
+ },
 
   filterData:[ // schema for unlike user id
     {

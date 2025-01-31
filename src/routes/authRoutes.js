@@ -64,5 +64,7 @@ router.post('/getActivateUser/:id', userController.getActivateUser);
 router.post('/addSelectedSong/:id', userController.addSelectedSong);
 router.post('/uploadSong', upload.fields([{ name: 'songImage', maxCount: 1 }, { name: 'songUrl', maxCount: 1 }]), userController.uploadSongs);
 router.get('/getUploadSong/:id', userController.getUploadSong);
+router.get('/getSelectedSong/:id', userController.getSelectedSong);
 router.post('/addNoneSong/:id', userController.addNoneSong);
+router.post('/addDarkMode/:id', userController.addDarkMode);
 module.exports = router;
