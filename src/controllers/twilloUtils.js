@@ -5,8 +5,8 @@ const sendTwilioMessage = async (to, message) => {
     try {
       await client.messages.create({
         body: message,
-        // from: '+12185304074', // Your Twilio phone number
-        from: '+1218530404598558', // Your Twilio phone number
+        // from: '+1218530404598558', d86901110@gmail.com twillo number
+        from: '+16187496515', // Your Twilio phone number
         to: to,
       });
       console.log(`Message sent successfully to ${to}`);

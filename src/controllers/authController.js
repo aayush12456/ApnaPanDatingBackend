@@ -286,7 +286,8 @@ exports.loginWithOtp = async (req, res) => {
         // Attempt to send OTP via Twilio
         await client.messages.create({
           body: message,
-          from: '+12185304074', // Your Twilio phone number
+          // from: '+12185304074',d86901110@gmail.com twillo number
+          from: '+16187496515', // Your Twilio phone number
           to: '+91' + filterPhoneObj.phone.toString(), // User's phone number
         });
         console.log('OTP sent via Twilio');
@@ -297,14 +298,16 @@ exports.loginWithOtp = async (req, res) => {
         const transporter = nodemailer.createTransport({
           service: 'gmail',
           auth: {
-            user: 'apnapan96@gmail.com',
-            pass: 'jqcz pymc zffw tmni', // Replace with your app password
+               // user: 'apnapan96@gmail.com',
+                // pass: 'jqcz pymc zffw tmni'
+            user: 'apnapan232@gmail.com',
+            pass: 'iaww nvwa zcnv omae', // Replace with your app password
           },
         });
   
         // Define email options
         const mailOptions = {
-          from: 'apnapan96@gmail.com',
+          from: 'apnapan232@gmail.com',
           to: filterPhoneObj.email, // Ensure user has an email address in DB
           subject: reset === 'Reset Password' ? 'ApnaPan Reset Password OTP' : 'ApnaPan Login OTP',
           html: `<h1 style="text-align:center;">ApnaPan</h1>
@@ -509,7 +512,7 @@ exports.getFilterUser = async (req, res) => {
           interestUsers = await authUser.find({ 
               gender: 'Female', 
               // city: userCity,
-              city: { $regex: new RegExp(`^${formattedCity}$`, "i") }, // Case-insensitive city match
+              city: { $regex: new RegExp(`^${formattedCity}\\s*$`, "i") }, // Case-insensitive city match
               _id: { $nin: [...filterUserArray,...matchFilterUserArray,...anotherMatchFilterUserArray] }
           });
       } else if (userGender === 'Female') {
@@ -517,7 +520,7 @@ exports.getFilterUser = async (req, res) => {
           interestUsers = await authUser.find({ 
               gender: 'Male', 
               // city: userCity,
-              city: { $regex: new RegExp(`^${formattedCity}$`, "i") }, // Case-insensitive city match
+              city: { $regex: new RegExp(`^${formattedCity}\\s*$`, "i") }, // Case-insensitive city match
               _id: { $nin: [...filterUserArray,...matchFilterUserArray,...anotherMatchFilterUserArray] }
           });
       } else {
@@ -791,9 +794,8 @@ exports.addLikeSmsTextUser = async (req, res) => {
 
         await client.messages.create({
             body: `Congrats! ${likeUserObj.firstName} just liked you now on ApnaPan checkout your likes`, // Your message here
-            // aayushtapadia28@gmail.co or aayushtapadia2001@gmail.com generated twillo phone number
-            // from: '+12513335644', // Your Twilio phone number
-            from: '+12513103964', // Your Twilio phone number
+            // from: '+12513103964', // d86901110@gmail.com twillo number
+            from: '+16187496515', // Your Twilio phone number
             to: '+91'+userObj.phone.toString() // Phone number of likeUserObj
         });
 
@@ -1562,14 +1564,16 @@ exports.addVisitorSendEmailUser = async (req, res) => {
         const transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
-                user: 'apnapan96@gmail.com',
-                pass: 'jqcz pymc zffw tmni'
+                // user: 'apnapan96@gmail.com',
+                // pass: 'jqcz pymc zffw tmni'
+                user: 'apnapan232@gmail.com',
+                pass: 'iaww nvwa zcnv omae'
             }
         });
 
         // Set up email options
         const mailOptions = {
-            from: 'apnapan96@gmail.com',
+            from: 'apnapan232@gmail.com',
             to: userObj.email,
             subject: `Hey ${userObj.firstName} - there was a new visitor on your profile. Check them out`,
             html: `<h1 style="text-Align:center; font-size:30px;font-weight:bold">ApnaPan</h1>

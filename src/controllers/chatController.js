@@ -316,15 +316,15 @@ exports.addChat = async (req, res) => {
             const transporter = nodemailer.createTransport({
               service: 'gmail',
               auth: {
-                  // user: 'aayushtapadia28@gmail.com',
-                  // pass: 'rfrx hntu pyhh tiaf'
-                  user: 'apnapan96@gmail.com',
-                  pass: 'jqcz pymc zffw tmni'
+                  // user: 'apnapan96@gmail.com',
+                  // pass: 'jqcz pymc zffw tmni'
+                  user: 'apnapan232@gmail.com',
+                  pass: 'iaww nvwa zcnv omae',
               }
           });
             const mailOptions = {
               // from: 'aayushtapadia28@gmail.com',
-              from: 'apnapan96@gmail.com',
+              from: 'apnapan232@gmail.com',
               to: receiverObj.email,
               subject: `Hey ${receiverObj.firstName} - there was a new message on your profile. Check them out`,
               html: `<h1 style="text-Align:center; font-size:30px;font-weight:bold">ApnaPan</h1>
