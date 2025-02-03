@@ -26,6 +26,11 @@ app.use('/images', express.static(path.join(__dirname, 'public', 'uploads')));
 app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use('/user', userRoutes);
 app.use('/chat',chatRoutes)
+
+app.get('/ping', (req, res) => {
+    res.status(200).send('Server is alive');
+});
+
 const port = process.env.PORT || 4000;
 server.listen(port, '0.0.0.0', () => {
     console.log(`Server is running at http://192.168.29.169:${port}`);
