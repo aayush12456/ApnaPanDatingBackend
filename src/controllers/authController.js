@@ -1991,7 +1991,7 @@ exports.addUpdatePasswordUser = async (req, res) => {
     //     { 'visitors.visitorId': id },
     //     { $pull: { visitors: { visitorId: id } } }
     //   );
-    await loginIdUser.findOneAndDelete({ loginEmail: deletedUser.email });
+    await loginIdUser.deleteMany({ loginEmail: deletedUser.email });
     await authUser.updateMany(
         {
           $or: [
