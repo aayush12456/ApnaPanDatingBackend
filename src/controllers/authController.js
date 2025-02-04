@@ -1982,7 +1982,6 @@ exports.addUpdatePasswordUser = async (req, res) => {
       }
   
        const deletedUser = await authUser.findByIdAndDelete(id);
-     
       if (!deletedUser) {
         return res.status(404).json({ msg: "User not found" });
       }
@@ -1992,6 +1991,7 @@ exports.addUpdatePasswordUser = async (req, res) => {
     //     { 'visitors.visitorId': id },
     //     { $pull: { visitors: { visitorId: id } } }
     //   );
+    await loginIdUser.findOneAndDelete({ loginEmail: deletedUser.email });
     await authUser.updateMany(
         {
           $or: [
