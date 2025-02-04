@@ -1388,6 +1388,9 @@ exports.getVisitorUser = async (req, res) => {
         visitorsWithTime = visitorsWithTime.filter(visitorWithTime => {
             return !user.onlineLikeUser.some(onlineLikeUserId => onlineLikeUserId.toString() === visitorWithTime.visitor._id.toString());
         });
+        visitorsWithTime = visitorsWithTime.filter(visitorWithTime => {
+          return !user.onlineSkipUser.some(onlineSkipUserId => onlineSkipUserId.toString() === visitorWithTime.visitor._id.toString());
+      });
         // visitorsWithTime = visitorsWithTime.filter(visitorWithTime => {
         //     return !user.deactivatedIdArray.some(deactivateUserId => deactivateUserId.toString() === visitorWithTime.visitor._id.toString());
         // });
