@@ -147,7 +147,12 @@ images: [{
       ref:'UserData'
     }
   ],
-  
+  oppositeFilterData:[ // schema for unlike user id
+  {
+    type:Schema.Types.ObjectId,
+    ref:'UserData'
+  }
+],
   // visitors:[ // schema for visitor user id
   //   {
   //     type:Schema.Types.ObjectId,

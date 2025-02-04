@@ -1095,27 +1095,7 @@ exports.getLikeMatchUser=async(req,res)=>{ // function to get data of like user
     }
 }
 
-// exports.addOnlineSkipUser=async(req,res)=>{ // function to store login user id in a like user
-//     try{
-//         const onlinePersonUserId=req.body.onlinePersonSkipUserId // like user id
-//         const loginUserId = req.params.id; // login user id
-//         console.log(loginUserId, 'onlinePlusSkip',onlinePersonUserId)
-//         const userObj = await authUser.findById(loginUserId);
-//         if (!userObj) {
-//           return res.status(404).json({ mssg: "User not found" });
-//       }
-//         const anotherUserObj=await authUser.findById(onlinePersonUserId)
-//         const visitorOpposite = anotherUserObj.visitors.filter(visitor => visitor.visitorId.toString() !== loginUserId);
-//              userObj.onlineSkipUser.push(onlinePersonUserId)
-//              const onlinePersonSkipUser=await userObj.save()
-//              console.log('online person skip',onlinePersonSkipUser)
-//              res.json({onlineSkip:onlinePersonSkipUser})
 
-//     }catch (error) {
-//         console.error(error);
-//         res.status(500).json({ mssg: "Internal server error" });
-//     }
-// }
 exports.addOnlineSkipUser = async (req, res) => {
   try {
       const onlinePersonUserId = req.body.onlinePersonSkipUserId; // Like user id
@@ -1183,6 +1163,10 @@ exports.addOnlineLikeUser=async(req,res)=>{ // function to store login user id i
         console.log(loginUserId, 'onlinePlusSkip',onlinePersonLikeUserId)
         const userObj = await authUser.findById(loginUserId);
         const anotherUserObj = await authUser.findById(onlinePersonLikeUserId)
+        await authUser.updateOne(
+          { _id: onlinePersonLikeUserId }, 
+          { $pull: { visitors: { visitorId: loginUserId } } }
+      );
         if (!userObj) {
                  return res.status(404).json({ mssg: "User not found" });
              }
