@@ -191,7 +191,7 @@ exports.getLoginIdUsers=async(req,res)=>{
        if (!deletedUser) {
            return res.status(404).send({ mssg: 'User not found' });
        }
-    
+       await loginIdUser.deleteMany({ loginId:loginId });
        res.status(200).send({ mssg: 'User deleted successfully',deletedUserData:deletedUser });
         }catch(e){
             res.status(500).send({mssg:'internal server error'})
