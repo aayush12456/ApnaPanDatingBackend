@@ -1095,25 +1095,62 @@ exports.getLikeMatchUser=async(req,res)=>{ // function to get data of like user
     }
 }
 
-exports.addOnlineSkipUser=async(req,res)=>{ // function to store login user id in a like user
-    try{
-        const onlinePersonUserId=req.body.onlinePersonSkipUserId // like user id
-        const loginUserId = req.params.id; // login user id
-        console.log(loginUserId, 'onlinePlusSkip',onlinePersonUserId)
-        const userObj = await authUser.findById(loginUserId);
-        if (!userObj) {
-                 return res.status(404).json({ mssg: "User not found" });
-             }
-             userObj.onlineSkipUser.push(onlinePersonUserId)
-             const onlinePersonSkipUser=await userObj.save()
-             console.log('online person skip',onlinePersonSkipUser)
-             res.json({onlineSkip:onlinePersonSkipUser})
+// exports.addOnlineSkipUser=async(req,res)=>{ // function to store login user id in a like user
+//     try{
+//         const onlinePersonUserId=req.body.onlinePersonSkipUserId // like user id
+//         const loginUserId = req.params.id; // login user id
+//         console.log(loginUserId, 'onlinePlusSkip',onlinePersonUserId)
+//         const userObj = await authUser.findById(loginUserId);
+//         if (!userObj) {
+//           return res.status(404).json({ mssg: "User not found" });
+//       }
+//         const anotherUserObj=await authUser.findById(onlinePersonUserId)
+//         const visitorOpposite = anotherUserObj.visitors.filter(visitor => visitor.visitorId.toString() !== loginUserId);
+//              userObj.onlineSkipUser.push(onlinePersonUserId)
+//              const onlinePersonSkipUser=await userObj.save()
+//              console.log('online person skip',onlinePersonSkipUser)
+//              res.json({onlineSkip:onlinePersonSkipUser})
 
-    }catch (error) {
-        console.error(error);
-        res.status(500).json({ mssg: "Internal server error" });
-    }
-}
+//     }catch (error) {
+//         console.error(error);
+//         res.status(500).json({ mssg: "Internal server error" });
+//     }
+// }
+exports.addOnlineSkipUser = async (req, res) => {
+  try {
+      const onlinePersonUserId = req.body.onlinePersonSkipUserId; // Like user id
+      const loginUserId = req.params.id; // Login user id
+
+      console.log(loginUserId, 'onlinePlusSkip', onlinePersonUserId);
+
+      const userObj = await authUser.findById(loginUserId);
+      if (!userObj) {
+          return res.status(404).json({ mssg: "User not found" });
+      }
+
+      const anotherUserObj = await authUser.findById(onlinePersonUserId);
+      if (!anotherUserObj) {
+          return res.status(404).json({ mssg: "Target user not found" });
+      }
+
+      // Remove loginUserId from anotherUserObj.visitors array in MongoDB permanently
+      await authUser.updateOne(
+          { _id: onlinePersonUserId }, 
+          { $pull: { visitors: { visitorId: loginUserId } } }
+      );
+
+      // Add onlinePersonUserId to loginUser's onlineSkipUser array
+      userObj.onlineSkipUser.push(onlinePersonUserId);
+      const onlinePersonSkipUser = await userObj.save();
+
+      console.log('online person skip', onlinePersonSkipUser);
+      res.json({ onlineSkip: onlinePersonSkipUser });
+
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ mssg: "Internal server error" });
+  }
+};
 
 exports.getOnlineSkipUser = async (req, res) => { // if you want to unlike user that unlike user id store in a database with the help of these func
     try {
@@ -1388,9 +1425,6 @@ exports.getVisitorUser = async (req, res) => {
         visitorsWithTime = visitorsWithTime.filter(visitorWithTime => {
             return !user.onlineLikeUser.some(onlineLikeUserId => onlineLikeUserId.toString() === visitorWithTime.visitor._id.toString());
         });
-        visitorsWithTime = visitorsWithTime.filter(visitorWithTime => {
-          return !user.onlineSkipUser.some(onlineSkipUserId => onlineSkipUserId.toString() === visitorWithTime.visitor._id.toString());
-      });
         // visitorsWithTime = visitorsWithTime.filter(visitorWithTime => {
         //     return !user.deactivatedIdArray.some(deactivateUserId => deactivateUserId.toString() === visitorWithTime.visitor._id.toString());
         // });
