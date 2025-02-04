@@ -178,25 +178,55 @@ exports.getLoginIdUsers=async(req,res)=>{
         }
     }
 
-    exports.deleteLoginIdUser=async(req,res)=>{
-        try{
-       const loginId=req.body.loginId
-    const loginIdUserObj=await loginIdUser.findOne({loginId:loginId})
-       const deletedUser = await loginIdUser.findOneAndDelete(loginIdUserObj._id);
-       const io = req.app.locals.io;
-       const allLoginUserArray=await loginIdUser.find()
-            const loginIdUserArray = allLoginUserArray.map((loginItem) => loginItem.loginId);
-            const loginIds=loginIdUserArray.filter((item)=>item.toString()!==deletedUser._id.toString())
-       io.emit('deleteLoginIdUser',loginIds);
-       if (!deletedUser) {
-           return res.status(404).send({ mssg: 'User not found' });
-       }
-       await loginIdUser.deleteMany({ loginId:loginId });
-       res.status(200).send({ mssg: 'User deleted successfully',deletedUserData:deletedUser });
-        }catch(e){
-            res.status(500).send({mssg:'internal server error'})
-        }
-    }
+    // exports.deleteLoginIdUser=async(req,res)=>{
+    //     try{
+    //    const loginId=req.body.loginId
+    // const loginIdUserObj=await loginIdUser.findOne({loginId:loginId})
+    //    const deletedUser = await loginIdUser.findOneAndDelete(loginIdUserObj._id);
+    //    const io = req.app.locals.io;
+    //    const allLoginUserArray=await loginIdUser.find()
+    //         const loginIdUserArray = allLoginUserArray.map((loginItem) => loginItem.loginId);
+    //         const loginIds=loginIdUserArray.filter((item)=>item.toString()!==deletedUser._id.toString())
+    //    io.emit('deleteLoginIdUser',loginIds);
+    //    if (!deletedUser) {
+    //        return res.status(404).send({ mssg: 'User not found' });
+    //    }
+    //    await loginIdUser.deleteMany({ loginId:loginId });
+    //    res.status(200).send({ mssg: 'User deleted successfully',deletedUserData:deletedUser });
+    //     }catch(e){
+    //         res.status(500).send({mssg:'internal server error'})
+    //     }
+    // }
+    exports.deleteLoginIdUser = async (req, res) => {
+      try {
+          const loginId = req.body.loginId;
+  
+          // Find all users with the given loginId
+          const loginIdUsers = await loginIdUser.find({ loginId });
+  
+          if (!loginIdUsers.length) {
+              return res.status(404).send({ mssg: 'User not found' });
+          }
+  
+          // Delete all users with the same loginId
+          await loginIdUser.deleteMany({ loginId });
+  
+          const io = req.app.locals.io;
+          const allLoginUserArray = await loginIdUser.find();
+          const loginIdUserArray = allLoginUserArray.map((loginItem) => loginItem.loginId);
+  
+          // Filter out deleted loginIds
+          const deletedUserIds = loginIdUsers.map(user => user._id.toString());
+          const loginIds = loginIdUserArray.filter(item => !deletedUserIds.includes(item.toString()));
+  
+          io.emit('deleteLoginIdUser', loginIds);
+  
+          res.status(200).send({ mssg: 'Users deleted successfully', deletedUserData: loginIdUsers });
+      } catch (e) {
+          res.status(500).send({ mssg: 'Internal server error' });
+      }
+  };
+  
 // exports.verifyToken=async(req,res)=>{
 //     try{
 //         const token = req.headers.authorization?.split(' ')[1]; // Extract token from "Bearer <token>"
