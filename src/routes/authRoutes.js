@@ -67,4 +67,5 @@ router.get('/getUploadSong/:id', userController.getUploadSong);
 router.get('/getSelectedSong/:id', userController.getSelectedSong);
 router.post('/addNoneSong/:id', userController.addNoneSong);
 router.post('/addDarkMode/:id', userController.addDarkMode);
+router.get('/allRegisterUser/:id', userController.allRegisterUser);
 module.exports = router;

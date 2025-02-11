@@ -2242,3 +2242,15 @@ exports.addDarkMode=async(req,res)=>{ // function to update user
       res.status(404).send({mssg:'internal server error'})
   }
 }
+exports.allRegisterUser = async (req, res) => {
+  try {
+      const userId = req.params.id;
+      console.log('user id is',userId)
+      const allUsers = await authUser.find();
+      res.json({
+          users: allUsers
+      });
+  } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+  }
+}
