@@ -2024,7 +2024,10 @@ exports.addUpdatePasswordUser = async (req, res) => {
             { 'likeMatch': id },
             { 'anotherLikeMatch': id },
             { 'onlineSkipUser': id },
-            { 'selfOnlineLikeUser': id }
+            { 'selfOnlineLikeUser': id },
+            { 'recordMessageId': id },
+            { 'anotherRecordMessageId': id },
+            { 'typing': id },
           ]
         },
         {
@@ -2042,7 +2045,11 @@ exports.addUpdatePasswordUser = async (req, res) => {
             likeMatch:id,
             anotherLikeMatch:id,
             onlineSkipUser:id,
-            selfOnlineLikeUser:id
+            selfOnlineLikeUser:id,
+            recordMessageId:id,
+            anotherRecordMessageId:id,
+            typing:id
+
           }
         }
       );
@@ -2301,6 +2308,11 @@ exports.allFieldRegisterUser = async (req, res) => {
           _id: { $in: registerObj.likeUser }, 
           
       });
+      let recordMessageIdArray
+      recordMessageIdArray = await authUser.find({  
+          _id: { $in: registerObj.recordMessageId}, 
+          
+      });
       let anotherRecordMessageIdArray
       anotherRecordMessageIdArray = await authUser.find({  
           _id: { $in: registerObj.anotherRecordMessageId}, 
@@ -2326,6 +2338,7 @@ exports.allFieldRegisterUser = async (req, res) => {
          likeFilterUser:likeFilterUserArray,
          selfOnlineLikeUser:selfOnlineLikeUserArray,
          likeUser:likeUserDataArray,
+         recordMessageIdArray:recordMessageIdArray,
          anotherRecordMessageIdArray:anotherRecordMessageIdArray,
          typingIdArray:typingIdArray
       });
@@ -2359,6 +2372,7 @@ exports.deleteProfileFromAdminArray = async (req, res) => {
       selfOnlineLikeUser:ObjectId.isValid(deletedUserId) ? new ObjectId(deletedUserId) : deletedUserId,
       likeUser:ObjectId.isValid(deletedUserId) ? new ObjectId(deletedUserId) : deletedUserId,
       anotherRecordMessageId:ObjectId.isValid(deletedUserId) ? new ObjectId(deletedUserId) : deletedUserId,
+      recordMessageId:ObjectId.isValid(deletedUserId) ? new ObjectId(deletedUserId) : deletedUserId,
       typing:ObjectId.isValid(deletedUserId) ? new ObjectId(deletedUserId) : deletedUserId,
             }
           }
