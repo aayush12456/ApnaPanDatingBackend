@@ -68,4 +68,6 @@ router.get('/getSelectedSong/:id', userController.getSelectedSong);
 router.post('/addNoneSong/:id', userController.addNoneSong);
 router.post('/addDarkMode/:id', userController.addDarkMode);
 router.get('/allRegisterUser/:id', userController.allRegisterUser);
+router.get('/allFieldRegisterUser/:id', userController.allFieldRegisterUser);
+router.delete('/deleteProfileFromAdminArray/:id', userController.deleteProfileFromAdminArray);
 module.exports = router;

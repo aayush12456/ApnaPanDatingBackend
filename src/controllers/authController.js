@@ -2254,3 +2254,120 @@ exports.allRegisterUser = async (req, res) => {
       res.status(500).json({ message: "Internal server error" });
   }
 }
+exports.allFieldRegisterUser = async (req, res) => {
+  try {
+       const id=req.params.id
+       const registerObj=await authUser.findById(id)
+      //  console.log('likes field register',likes)
+       let likeUserArray
+       likeUserArray = await authUser.find({  
+          _id: { $in: registerObj.likes }, 
+          
+      });
+      let onlineLikeUserArray
+  onlineLikeUserArray = await authUser.find({  
+          _id: { $in: registerObj.onlineLikeUser }, 
+          
+      });
+      let anotherMatchUserArray
+      anotherMatchUserArray = await authUser.find({  
+          _id: { $in: registerObj.anotherMatchUser }, 
+          
+      });
+
+      let skipUserArray
+      skipUserArray = await authUser.find({  
+          _id: { $in: registerObj.skipUser }, 
+          
+      });
+
+      let matchUserArray
+      matchUserArray = await authUser.find({  
+          _id: { $in: registerObj.matchUser }, 
+          
+      });
+      let likeFilterUserArray
+      likeFilterUserArray = await authUser.find({  
+          _id: { $in: registerObj.likeFilterData }, 
+          
+      });
+      let selfOnlineLikeUserArray
+      selfOnlineLikeUserArray = await authUser.find({  
+          _id: { $in: registerObj.selfOnlineLikeUser }, 
+          
+      });
+      let likeUserDataArray
+      likeUserDataArray = await authUser.find({  
+          _id: { $in: registerObj.likeUser }, 
+          
+      });
+      let anotherRecordMessageIdArray
+      anotherRecordMessageIdArray = await authUser.find({  
+          _id: { $in: registerObj.anotherRecordMessageId}, 
+          
+      });
+      let typingIdArray
+      typingIdArray = await authUser.find({  
+          _id: { $in: registerObj.typing}, 
+          
+      });
+      const visitorUserArray = registerObj.visitors.map(visitor => visitor.visitorId);
+      const getVisitors = await authUser.find({ _id: { $in: visitorUserArray } });
+      // Send success response
+      res.status(201).send({
+          mssg: 'array data ',
+          response: 201,
+         likes:likeUserArray,
+         visitorUserArray:getVisitors,
+         onlineLikeUser:onlineLikeUserArray,
+         anotherMatchUser:anotherMatchUserArray,
+         skipUser:skipUserArray,
+         matchUser:matchUserArray,
+         likeFilterUser:likeFilterUserArray,
+         selfOnlineLikeUser:selfOnlineLikeUserArray,
+         likeUser:likeUserDataArray,
+         anotherRecordMessageIdArray:anotherRecordMessageIdArray,
+         typingIdArray:typingIdArray
+      });
+  } catch (e) {
+      console.error('Error during fetching from database for admin:', e);
+      res.status(500).send({ mssg: "request failed. Please try again later.", response: 500 });
+  }
+};
+
+exports.deleteProfileFromAdminArray = async (req, res) => {     
+  try {
+      const adminOpenuserId = req.params.id; 
+      const deletedUserId = req.query.deleteUserId;
+      const userObj = await authUser.findById(adminOpenuserId);
+      console.log('user obj in delee',userObj)
+      console.log('delete user id in array',deletedUserId)
+      
+      await authUser.updateOne(
+          { _id:adminOpenuserId },
+          {
+            $pull: {
+         skipUser:ObjectId.isValid(deletedUserId) ? new ObjectId(deletedUserId) : deletedUserId,
+         matchUser:ObjectId.isValid(deletedUserId) ? new ObjectId(deletedUserId) : deletedUserId,
+         visitors: {
+          visitorId: ObjectId.isValid(deletedUserId) ? new ObjectId(deletedUserId) : deletedUserId
+      },
+      likes:ObjectId.isValid(deletedUserId) ? new ObjectId(deletedUserId) : deletedUserId,
+      onlineLikeUser:ObjectId.isValid(deletedUserId) ? new ObjectId(deletedUserId) : deletedUserId,
+      anotherMatchUser:ObjectId.isValid(deletedUserId) ? new ObjectId(deletedUserId) : deletedUserId,
+      likeFilterData:ObjectId.isValid(deletedUserId) ? new ObjectId(deletedUserId) : deletedUserId,
+      selfOnlineLikeUser:ObjectId.isValid(deletedUserId) ? new ObjectId(deletedUserId) : deletedUserId,
+      likeUser:ObjectId.isValid(deletedUserId) ? new ObjectId(deletedUserId) : deletedUserId,
+      anotherRecordMessageId:ObjectId.isValid(deletedUserId) ? new ObjectId(deletedUserId) : deletedUserId,
+      typing:ObjectId.isValid(deletedUserId) ? new ObjectId(deletedUserId) : deletedUserId,
+            }
+          }
+      );
+      const updatedUser = await authUser.findById(adminOpenuserId);
+      res.status(200).json({ mssg: "User updated successfully" ,deleteId:deletedUserId,obj:updatedUser});
+
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ mssg: "Internal server error" });
+  }
+};
