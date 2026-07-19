@@ -10,7 +10,7 @@ const cors = require("cors");
 const socketCon = require('./socket');
 const app = express();
 const server = http.createServer(app);
-
+const onlineUsers = new Map();
 const corsOptions = {
     // origin: 'http://192.168.29.169:8081',
     origin: '*',
@@ -139,8 +139,34 @@ io.on('connection', (socket) => {
         io.emit('getSongObj',newId)
 
     })
-    socket.on('disconnect', (reason) => {
-        console.log('A user disconnected with socket ID:', socket.id,'reason is',reason);
+
+    socket.on("registerUser", (userId) => {
+
+        onlineUsers.set(userId.toString(), socket.id);
+    
+        socket.userId = userId.toString();
+    
+        console.log("User Online :", socket.userId);
+    
+        io.emit("onlineUsers", Array.from(onlineUsers.keys()));
+    });
+
+    // socket.on('disconnect', (reason) => {
+    //     console.log('A user disconnected with socket ID:', socket.id,'reason is',reason);
+    // });
+    socket.on("disconnect", () => {
+
+        console.log("Socket disconnected :", socket.id);
+    
+        if (socket.userId) {
+    
+            onlineUsers.delete(socket.userId);
+    
+            console.log("User Offline :", socket.userId);
+    
+            io.emit("onlineUsers", Array.from(onlineUsers.keys()));
+        }
+    
     });
 });
 

@@ -63,7 +63,6 @@ exports.register = async (req, res) => {
             firstName: req.body.firstName,
             email: req.body.email,
             phone: req.body.phone,
-            password: req.body.password,
             gender: req.body.gender,
             DOB: req.body.DOB,
             city: req.body.city,
@@ -158,57 +157,99 @@ exports.login = async (req, res) => {
   }
 };
 
+exports.sendOtp = async (req, res) => {
+  try {
+    const phone = req.body.phone;
+    console.log("otp phone", phone);
 
+    const loginObj = await authUser.findOne({ phone });
 
-exports.getLoginIdUsers=async(req,res)=>{
-    try{
-    const id=req.params.id
-
-    const loginIdUserData=await loginIdUser.find()
-
-    const loginIdUserArray=loginIdUserData.filter((loginItem)=>loginItem.loginId!==id)
-    const loginIds = loginIdUserArray.map((loginItem) => loginItem.loginId);
-    const loginUserArray=await authUser.find({
-        _id:{$in:loginIds}
-    })
-    res.json({loginIdUserArray:loginIds,loginUserArray:loginUserArray})
-
-    }catch(e){
-            res.status(404).send({mssg:'internal server error'})
-        }
+    if (!loginObj) {
+      return res.status(404).json({
+        mssg: "User not found",
+      });
     }
 
+    // Generate random 6-digit OTP
+    const otp = Math.floor(10000 + Math.random() * 90000);
+
+    console.log("Generated OTP:", otp);
+
+    res.status(200).json({
+      mssg: "Send OTP successfully",
+      email: loginObj.email,
+      phone: loginObj.phone,
+      otp: otp,
+    });
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({
+      mssg: "Internal server error",
+    });
+  }
+};
+exports.verifyOtp = async (req, res) => {
+  try {
+    const phone = req.body.phone;
+
+    const userDetails = await authUser.findOne({ phone: phone });
+
+    if (!userDetails) {
+      return res.status(404).send({
+        mssg: "User not found",
+        response: 404,
+      });
+    }
+
+    // ===== Same loginIdUser code as login API =====
    
-    exports.deleteLoginIdUser = async (req, res) => {
-      try {
-          const loginId = req.body.loginId;
-  
-          // Find all users with the given loginId
-          const loginIdUsers = await loginIdUser.find({ loginId });
-  
-          if (!loginIdUsers.length) {
-              return res.status(404).send({ mssg: 'User not found' });
-          }
-  
-          // Delete all users with the same loginId
-          await loginIdUser.deleteMany({ loginId });
-  
-          const io = req.app.locals.io;
-          const allLoginUserArray = await loginIdUser.find();
-          const loginIdUserArray = allLoginUserArray.map((loginItem) => loginItem.loginId);
-  
-          // Filter out deleted loginIds
-          const deletedUserIds = loginIdUsers.map(user => user._id.toString());
-          const loginIds = loginIdUserArray.filter(item => !deletedUserIds.includes(item.toString()));
-  
-          io.emit('deleteLoginIdUser', loginIds);
-  
-          res.status(200).send({ mssg: 'Users deleted successfully', deletedUserData: loginIdUsers });
-      } catch (e) {
-          res.status(500).send({ mssg: 'Internal server error' });
-      }
-  };
-  
+    // ===== Generate Token =====
+    const token = await userDetails.generateAuthToken();
+
+    console.log("login token is", token);
+
+    res.status(201).send({
+      mssg: "Login Successfully",
+      response: 201,
+      loginData: {
+        userId: userDetails._id,
+        name: userDetails.firstName,
+        image: userDetails.images[0],
+        gender: userDetails.gender,
+        _id: userDetails._id,
+        dob: userDetails.DOB,
+        appearanceMode: userDetails.appearanceMode,
+      },
+      token: token,
+    
+    });
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({
+      mssg: "Internal server error",
+    });
+  }
+};
+
+exports.personalDetails = async (req, res) => {
+  try{
+    const id=req.params.id
+    const userDetails = await authUser.findOne({ _id:id });
+    console.log('login details is', userDetails);
+    res.status(201).send({
+      mssg: 'fetch personal detail Successfully',
+      response: 201,
+     personalDetail:userDetails
+    });
+  }
+  catch (e) {
+    console.log(e);
+    res.status(500).json({
+      mssg: "Internal server error",
+    });
+  }
+  }
+ 
 // exports.verifyToken=async(req,res)=>{
 //     try{
 //         const token = req.headers.authorization?.split(' ')[1]; // Extract token from "Bearer <token>"

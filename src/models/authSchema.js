@@ -25,10 +25,7 @@ const authSchema = mongoose.Schema({
     unique: true,
     min: 10,
   },
-  password: {
-    type: String,
-    required: true,
-  },
+
   gender: {
     type: String,
     required: true,
