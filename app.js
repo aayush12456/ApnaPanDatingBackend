@@ -131,6 +131,10 @@ io.on('connection', (socket) => {
     //     io.emit('getVisitorNotify',newId)
 
     // })
+     socket.on('addNotifyId',(newId)=>{
+        io.emit('getNotifyId',newId)
+
+    })
     socket.on('deleteVisitorNotify',(newId)=>{
         io.emit('getVisitorCountUser',newId)
 

@@ -1,10 +1,10 @@
 const mongoose = require("mongoose");
 
-const loginIdSchema = mongoose.Schema({
+const notifySchema = mongoose.Schema({
     loginId:{
         type:String
     },
-    loginEmail:{
+    notifyToken:{
         type:String
     },
     timestamp: { 
@@ -13,6 +13,6 @@ const loginIdSchema = mongoose.Schema({
         default: Date.now  // Automatically sets the timestamp to the current time
     }
 })
-loginIdSchema.index({ timestamp: 1 }, { expireAfterSeconds:43200 });
-const loginIdDataUser = new mongoose.model("loginIdUser", loginIdSchema);
-module.exports = loginIdDataUser;
+// notifySchema.index({ timestamp: 1 }, { expireAfterSeconds:43200 });
+const notifyIdDataUser = new mongoose.model("notifyIdUser", notifySchema);
+module.exports = notifyIdDataUser;

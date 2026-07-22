@@ -1,6 +1,6 @@
 const bcrypt=require('bcrypt')
 const authUser=require('../models/authSchema')
-const loginIdUser=require('../models/loginIdSchema')
+const notifyIdUser=require('../models/notifySchema')
 const mongoose = require('mongoose');
 const cloudinary = require("cloudinary").v2;
 const twilio=require('twilio')
@@ -2426,3 +2426,29 @@ exports.deleteProfileFromAdminArray = async (req, res) => {
       res.status(500).json({ mssg: "Internal server error" });
   }
 };
+
+exports.addNotifyUser=async(req,res)=>{ // function to update user
+  try{
+      const loginId=req.params.id
+      const notifyToken=req.body.notifyToken
+     const notifyIdDataUser= new notifyIdUser({
+      loginId:loginId,
+      notifyToken:notifyToken
+     })
+     const notifyDataUser=await notifyIdDataUser.save()
+  res.json({mssg:'notify user',notifyUser:notifyDataUser})
+  }catch(e){
+    console.log(e);
+      res.status(404).send({mssg:'internal server error'})
+  }
+}
+exports.getNotifyUser=async(req,res)=>{ // function to update user
+  try{
+      const id=req.params.id
+     const getUploadData=await notifyIdUser.find()
+     console.log('get upload user',getUploadData)
+  res.json({mssg:'notify user',notifyUser:getUploadData})
+  }catch(e){
+      res.status(404).send({mssg:'internal server error'})
+  }
+}
