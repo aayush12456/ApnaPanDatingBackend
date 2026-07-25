@@ -11,6 +11,7 @@ const socketCon = require('./socket');
 const app = express();
 const server = http.createServer(app);
 const onlineUsers = new Map();
+const chatUsersArray = [];
 const corsOptions = {
     // origin: 'http://192.168.29.169:8081',
     origin: '*',
@@ -135,6 +136,10 @@ io.on('connection', (socket) => {
         io.emit('getNotifyId',newId)
 
     })
+    socket.on('deleteNotifyId',(newId)=>{
+        io.emit('getNotifyId',newId)
+
+    })
     socket.on('deleteVisitorNotify',(newId)=>{
         io.emit('getVisitorCountUser',newId)
 
@@ -143,6 +148,38 @@ io.on('connection', (socket) => {
         io.emit('getSongObj',newId)
 
     })
+
+    socket.on('addChatUsers', (chatUserObj) => {
+        console.log('Received addChatUsers:', chatUserObj);
+        // Avoid duplicate entries for same pair
+        const exists = chatUsersArray.some(
+            (item) => item.loginId === chatUserObj.loginId && item.anotherId === chatUserObj.anotherId
+        );
+        if (!exists && chatUserObj.loginId && chatUserObj.anotherId) {
+            chatUsersArray.push(chatUserObj);
+        }
+        console.log('chatUsersArray now:', chatUsersArray);
+        io.emit('getChatUsers', chatUsersArray);
+    });
+
+    // Remove loginId + anotherId from array (on back button)
+    socket.on('deleteChatUsers', (chatUserObj) => {
+        console.log('Received deleteChatUsers:', chatUserObj);
+        const index = chatUsersArray.findIndex(
+            (item) => item.loginId === chatUserObj.loginId && item.anotherId === chatUserObj.anotherId
+        );
+        if (index !== -1) {
+            chatUsersArray.splice(index, 1);
+        }
+        console.log('chatUsersArray after delete:', chatUsersArray);
+        io.emit('getChatUsers', chatUsersArray);
+    });
+
+    // Current array maangne ke liye (race condition fix)
+    socket.on('requestChatUsers', () => {
+        console.log('Sending current chatUsersArray to requester');
+        socket.emit('getChatUsers', chatUsersArray);  // sirf usi client ko
+    });
 
     socket.on("registerUser", (userId) => {
 

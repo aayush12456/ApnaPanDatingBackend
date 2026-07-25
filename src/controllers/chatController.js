@@ -302,63 +302,58 @@ exports.addChat = async (req, res) => {
 
     exports.addRecordMessage = async (req, res) => {
       try {
-       const loginId=req.params.id
-       const recieverId=req.body.recieverId
+        const loginId = req.params.id;
+        const recieverId = req.body.recieverId;
+    
         const receiverObj = await authUser.findById(recieverId);
         const loginObj = await authUser.findById(loginId);
-        const indianTime = moment().tz('Asia/Kolkata').toISOString();
+    
+        const indianTime = moment().tz("Asia/Kolkata").toISOString();
+    
         if (receiverObj) {
+    
           // Check if loginId is in anotherRecordMessageId
           if (!receiverObj.anotherRecordMessageId.includes(loginId)) {
-            // Push loginId to recordMessageId if not in anotherRecordMessageId
+    
+            // Push loginId to recordMessageId
             receiverObj.recordMessageId.push(loginId);
-            receiverObj.messageNotify.push({ loginId: loginId, recieverId:recieverId,recieverName:loginObj.firstName,images:loginObj.images[0],timestamp:indianTime });
-            const transporter = nodemailer.createTransport({
-              service: 'gmail',
-              auth: {
-                  // user: 'apnapan96@gmail.com',
-                  // pass: 'jqcz pymc zffw tmni'
-                  user: 'apnapan232@gmail.com',
-                  pass: 'iaww nvwa zcnv omae',
-              }
-          });
-            const mailOptions = {
-              // from: 'aayushtapadia28@gmail.com',
-              from: 'apnapan232@gmail.com',
-              to: receiverObj.email,
-              subject: `Hey ${receiverObj.firstName} - there was a new message on your profile. Check them out`,
-              html: `<h1 style="text-Align:center; font-size:30px;font-weight:bold">ApnaPan</h1>
-              <hr style="color:grey;"/>
-              <p style="padding-top:1rem;font-size:1.2rem">Hi ${receiverObj.firstName},</p>
-              <p style="font-weight:bold; padding-top:1rem;font-size:1.2rem;color:black">${loginObj.firstName} <span style="font-weight:normal;">replied to your message on ApnaPan. See the message and reply</span></p>
-              <div style='display:flex;justify-content:center;margin-top:4rem'>
-              <a href="https://apnapandating.netlify.app/" style="text-decoration:none;"> <button type='btn' style="background-color:green;font-size:17px;font-weight:bold;color:white;height:45px;width:18rem;border-radius:25px;cursor:pointer" >Read Message</button></a>
-              </div>`
-          };
-          const result = await transporter.sendMail(mailOptions);
-          console.log('Email sent: ', result);
+    
+            // Add message notification
+            receiverObj.messageNotify.push({
+              loginId: loginId,
+              recieverId: recieverId,
+              recieverName: loginObj.firstName,
+              images: loginObj.images[0],
+              timestamp: indianTime,
+            });
           }
     
           // Save the updated receiver object
           const recieverObjData = await receiverObj.save();
-          
-          // Respond with success
+    
           res.status(201).send({
-            mssg: 'record message id added successfully',
+            mssg: "record message id added successfully",
             recordMessageIdArray: recieverObjData.recordMessageId,
-            id:recieverId,
-            messageNotify:receiverObj.messageNotify
+            id: recieverId,
+            messageNotify: receiverObj.messageNotify,
           });
+    
         } else {
           console.log("Receiver not found");
-          res.status(404).send({ mssg: 'Receiver not found' });
+    
+          res.status(404).send({
+            mssg: "Receiver not found",
+          });
         }
+    
       } catch (e) {
         console.error(e);
-        res.status(500).send({ mssg: 'Message does not exist' });
+    
+        res.status(500).send({
+          mssg: "Message does not exist",
+        });
       }
     };
-
 
     exports.getRecordMessage=async(req,res)=>{
       try{

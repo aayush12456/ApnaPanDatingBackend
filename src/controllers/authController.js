@@ -2427,21 +2427,41 @@ exports.deleteProfileFromAdminArray = async (req, res) => {
   }
 };
 
-exports.addNotifyUser=async(req,res)=>{ // function to update user
-  try{
-      const loginId=req.params.id
-      const notifyToken=req.body.notifyToken
-     const notifyIdDataUser= new notifyIdUser({
-      loginId:loginId,
-      notifyToken:notifyToken
-     })
-     const notifyDataUser=await notifyIdDataUser.save()
-  res.json({mssg:'notify user',notifyUser:notifyDataUser})
-  }catch(e){
+exports.addNotifyUser = async (req, res) => {
+  try {
+    const loginId = req.params.id;
+    const notifyToken = req.body.notifyToken;
+
+    // Check if already exists
+    const existingNotify = await notifyIdUser.findOne({
+      loginId,
+      notifyToken,
+    });
+
+    if (existingNotify) {
+      return res.json({
+        mssg: "Notify token already exists",
+        notifyUser: existingNotify,
+      });
+    }
+
+    const notifyIdDataUser = new notifyIdUser({
+      loginId,
+      notifyToken,
+    });
+
+    const notifyDataUser = await notifyIdDataUser.save();
+    const getUploadData=await notifyIdUser.find()
+
+    res.json({
+      mssg: "notify user",
+      notifyUser: getUploadData,
+    });
+  } catch (e) {
     console.log(e);
-      res.status(404).send({mssg:'internal server error'})
+    res.status(404).send({ mssg: "internal server error" });
   }
-}
+};
 exports.getNotifyUser=async(req,res)=>{ // function to update user
   try{
       const id=req.params.id
@@ -2452,3 +2472,31 @@ exports.getNotifyUser=async(req,res)=>{ // function to update user
       res.status(404).send({mssg:'internal server error'})
   }
 }
+exports.deleteNotifyUser = async (req, res) => {
+  try {
+    const loginId = req.params.id;
+    const notifyToken = req.body.token;
+
+    const deletedNotify = await notifyIdUser.findOneAndDelete({
+      loginId,
+      notifyToken,
+    });
+
+    if (!deletedNotify) {
+      return res.status(404).json({
+        mssg: "Document not found",
+      });
+    }
+    const remainingNotifyUsers = await notifyIdUser.find();
+
+    res.json({
+      mssg: "Notify user deleted successfully",
+      notifyUser:remainingNotifyUsers,
+    });
+  } catch (e) {
+    console.log(e);
+    res.status(500).send({
+      mssg: "internal server error",
+    });
+  }
+};

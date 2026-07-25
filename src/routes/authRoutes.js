@@ -52,6 +52,7 @@ router.post('/addVisitorSendEmail/:id', userController.addVisitorSendEmailUser);
 // router.get('/getVisitorNotify/:id',userController.getVisitorNotifyUser)
 router.post('/notifyUser/:id',userController.addNotifyUser)
 router.get('/notifyUser/:id',userController.getNotifyUser)
+router.post('/deleteNotifyUser/:id',userController.deleteNotifyUser)
 router.post('/deleteVisitorNotify/:id',userController.deleteVisitorNotifyUser)
 router.post('/addVisitorLikeUser/:id', userController.addVisitorLikeUser);
 router.get('/getVisitorLikeUser/:id', userController.getVisitorLikeUser);
