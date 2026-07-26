@@ -693,7 +693,7 @@ exports.addMatchUser = async (req, res) => {
       console.log(matchLikeId, 'matchPlusLike', loginId);
       const userObj = await authUser.findById(loginId);
       const anotherUserObj = await authUser.findById(matchLikeId);
-      // const matchUserObj = await authUser.findById(matchLikeId);
+
       console.log('user obj data is',userObj)
       console.log('another user obj data is',anotherUserObj)
 
@@ -701,28 +701,17 @@ exports.addMatchUser = async (req, res) => {
           return res.status(404).json({ mssg: "User not found" });
       }
 
-      // if (anotherUserObj.visitors.includes(loginId)) {
-      //     anotherUserObj.counter = (anotherUserObj.counter || 0) + 1;
-      // }
-      // const index = anotherUserObj. likeUser.indexOf(loginId);
-      // if (index > -1) {
-      //     anotherUserObj. likeUser.splice(index, 1);
-      // }
-      // // Check if loginId is present in anotherUserObj.likes
-      // if (!anotherUserObj.likes.includes(loginId)) {
-      //     anotherUserObj.anotherMatchData.push(loginId);
-      // }
-
+      
       userObj.likeFilterData.push(matchLikeId);
       anotherUserObj.likes.push(loginId);
-      // matchUserObj.matchNotify = loginId;
+
 
       const matchLikeUser = await userObj.save();
       const anotherMatchLikeUser = await anotherUserObj.save();
-      // const matchUser = await matchUserObj.save();
+
 
       console.log('match person like', matchLikeUser);
-      // console.log('match User', matchUser);
+
       let likeFilterArray;
       likeFilterArray = await authUser.find({  
           _id: { $in: matchLikeUser.likeFilterData }, 
@@ -737,47 +726,8 @@ exports.addMatchUser = async (req, res) => {
           likeFilterArray:likeFilterArray,
           likesArray: likesArray,
       });
-    //   await client.messages.create({
-    //     body: `Congrats! ${userObj.firstName} just liked you now on ApnaPan checkout your likes`, // Your message here
-    //     // aayushtapadia28@gmail.co or aayushtapadia2001@gmail.com generated twillo phone number
-    //     // from: '+12513335644', // Your Twilio phone number
-    //     from: '+12185304074', // Your Twilio phone number
-    //     to: '+91'+anotherUserObj.phone.toString() // Phone number of likeUserObj
-    // });
-    const message = `Congrats! ${userObj.firstName} just liked you now on ApnaPan. Check out your likes!`;
-    const recipient = `+91${anotherUserObj.phone}`;
-    try {
-        // Attempt to send SMS
-        await sendTwilioMessage(recipient,message);
-      } catch (twilioError) {
-        console.error('Twilio SMS failed. Sending email as fallback:', twilioError.message);
-  
-        // Email content
-        const emailSubject = `Congrats, ${userObj.firstName} just liked you now on ApnaPan. Check out your likes!`;
-        const emailHtml = `
-          <h1 style="text-align:center; font-size:30px; font-weight:bold;">ApnaPan</h1>
-          <hr style="color:grey;"/>
-          <p style="padding-top:1rem; font-size:1.2rem;">Hi ${anotherUserObj.firstName},</p>
-          <p style="font-weight:bold; padding-top:1rem; font-size:1.2rem; color:black;">
-          Congrats, ${userObj.firstName} just liked you now on ApnaPan. Check out your likes!
-          </p>
-          <div style='display:flex; justify-content:center; margin-top:4rem;'>
-            <a href="https://apnapandating.netlify.app/" style="text-decoration:none;">
-              <button type='button' style="background-color:white; font-size:17px; font-weight:bold; color:green; height:45px; width:18rem; border-radius:25px; cursor:pointer; border-color: green;">
-                View and reply
-              </button>
-            </a>
-          </div>`;
-  
-        // Send fallback email
-        try {
-          await sendEmail(anotherUserObj.email, emailSubject, emailHtml);
-          console.log('Fallback email sent successfully to', anotherUserObj.email);
-        } catch (emailError) {
-          console.error('Failed to send fallback email:', emailError.message);
-        }
-      }
-    // await sendTwilioMessage(recipient, message);
+   
+   
 
     
   } catch (error) {
@@ -2450,8 +2400,10 @@ exports.addNotifyUser = async (req, res) => {
       notifyToken,
     });
 
-    const notifyDataUser = await notifyIdDataUser.save();
+ await notifyIdDataUser.save();
     const getUploadData=await notifyIdUser.find()
+    const io = req.app.locals.io;
+    io.emit("getNotifyId", getUploadData);
 
     res.json({
       mssg: "notify user",
@@ -2488,6 +2440,8 @@ exports.deleteNotifyUser = async (req, res) => {
       });
     }
     const remainingNotifyUsers = await notifyIdUser.find();
+    const io = req.app.locals.io;
+    io.emit("getNotifyId", remainingNotifyUsers);
 
     res.json({
       mssg: "Notify user deleted successfully",
