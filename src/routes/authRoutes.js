@@ -42,20 +42,15 @@ router.get('/getOnlineSkipUser/:id', userController.getOnlineSkipUser);
 router.delete('/deleteSkipProfile/:id', userController.deleteSkipProfileUser); 
 router.post('/addOnlineLikeUser/:id', userController.addOnlineLikeUser);
 router.get('/getOnlineLikeUser/:id', userController.getOnlineLikeUser);
-router.post('/addVisitorUser/:id',userController.addVisitorUser)
-router.get('/getVisitorUser/:id', userController.getVisitorUser);
-router.post('/addVisitorCount/:id', userController.addVisitorCountUser);
-router.get('/getVisitorCount/:id', userController.getVisitorCountUser);
-router.post('/deleteVisitorCount', userController.deleteVisitorCounterUser);
-router.post('/addVisitorSendEmail/:id', userController.addVisitorSendEmailUser);
+
 // router.post('/addVisitorNotify/:id',userController.addVisitorNotifyUser)
 // router.get('/getVisitorNotify/:id',userController.getVisitorNotifyUser)
 router.post('/notifyUser/:id',userController.addNotifyUser)
 router.get('/notifyUser/:id',userController.getNotifyUser)
 router.post('/deleteNotifyUser/:id',userController.deleteNotifyUser)
 router.post('/deleteVisitorNotify/:id',userController.deleteVisitorNotifyUser)
-router.post('/addVisitorLikeUser/:id', userController.addVisitorLikeUser);
-router.get('/getVisitorLikeUser/:id', userController.getVisitorLikeUser);
+
+
 router.post('/addBlockChatIdUser/:id', userController.blockChatIdUser);
 router.get('/getBlockChatIdUser/:id', userController.getBlockChatIdUser);
 // router.delete('/deleteBlockIdUser/:id', userController.deleteBlockUser );
