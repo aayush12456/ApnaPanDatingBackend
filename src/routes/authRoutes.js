@@ -49,7 +49,7 @@ router.post('/notifyUser/:id',userController.addNotifyUser)
 router.get('/notifyUser/:id',userController.getNotifyUser)
 router.post('/deleteNotifyUser/:id',userController.deleteNotifyUser)
 router.post('/deleteVisitorNotify/:id',userController.deleteVisitorNotifyUser)
-
+router.post('/deleteMultipleVisitorNotify/:id',userController.deleteMultipleNotifyUsers)
 
 router.post('/addBlockChatIdUser/:id', userController.blockChatIdUser);
 router.get('/getBlockChatIdUser/:id', userController.getBlockChatIdUser);

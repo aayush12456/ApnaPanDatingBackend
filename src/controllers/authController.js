@@ -1983,3 +1983,93 @@ exports.deleteNotifyUser = async (req, res) => {
     });
   }
 };
+
+exports.deleteMultipleNotifyUsers = async (req,res)=>{
+
+try{
+
+    const loginId = req.params.id;
+    console.log('login id delete',loginId)
+
+    const {tokens} = req.body;
+    console.log('token data',tokens)
+
+    if(!Array.isArray(tokens) || tokens.length===0){
+
+        return res.status(400).json({
+            mssg:"Tokens array required"
+        });
+
+    }
+
+
+
+    const deletedNotify = 
+    await notifyIdUser.deleteMany({
+
+        loginId,
+
+        notifyToken:{
+            $in:tokens
+        }
+
+    });
+
+
+
+    if(deletedNotify.deletedCount===0){
+
+        return res.status(404).json({
+            mssg:"No matching token found"
+        });
+
+    }
+
+
+
+    const remainingNotifyUsers =
+    await notifyIdUser.find();
+
+
+
+    const io=req.app.locals.io;
+
+
+    io.emit(
+        "getNotifyId",
+        remainingNotifyUsers
+    );
+
+
+
+    res.status(200).json({
+
+        mssg:"Invalid notify users deleted successfully",
+
+        deletedCount:
+        deletedNotify.deletedCount,
+
+        notifyUser:
+        remainingNotifyUsers
+
+    });
+
+
+
+}
+catch(error){
+
+console.log(error);
+
+
+res.status(500).json({
+
+    mssg:"Internal server error"
+
+});
+
+
+}
+
+
+};
