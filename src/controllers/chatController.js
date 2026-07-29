@@ -3,8 +3,16 @@ const authUser=require('../models/authSchema')
 const chatIdUser=require('../models/chatIdSchema')
 const moment = require('moment-timezone');
 const mongoose = require('mongoose');
+const cloudinary = require("cloudinary").v2;
 const nodemailer = require('nodemailer');
+const dotenv=require('dotenv')
+dotenv.config()
 const ObjectId = mongoose.Types.ObjectId;
+cloudinary.config({ 
+  cloud_name:process.env.CLOUD_NAME,
+  api_key:process.env.API_KEY,
+  api_secret:process.env.API_SECRET
+});
 exports.addChat = async (req, res) => {
     try {
       const { id, anotherId, loginName, anotherName } = req.body;
@@ -74,10 +82,28 @@ exports.addChat = async (req, res) => {
   }
 
   exports.addSendMessage = async (req, res) => {
+    let imageUrl = null;
+    let imagePublicId = null;
     try {
       const { id: loginId } = req.params;
       const { senderId, recieverId, message,senderName,images } = req.body;
-  
+console.log('req file',req.file)
+  if (req.file) {
+
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "chatImages",
+      });
+      
+      console.log('result data',result)
+
+      if (!result || !result.secure_url) {
+        throw new Error("Cloudinary image upload failed");
+      }
+
+      imageUrl = result.secure_url;
+      imagePublicId = result.public_id;
+    }
+
       // Fetch the chatIdArray
       const chatIdArray = await chatIdUser.find();
   
@@ -94,6 +120,8 @@ exports.addChat = async (req, res) => {
         recieverId,
         message,
         chatId: existingChat ? existingChat._id : undefined, // Assign chatId if a matching chat was found
+        image: imageUrl,
+        imagePublicId: imagePublicId,
         timestamp: indianTime 
       });
   
@@ -206,6 +234,18 @@ exports.addChat = async (req, res) => {
      const message=req.body.message
      const time=req.body.timestamp
      const deleteFindChatObj=await ChatUser.findOne({chatId:chatId,message:message,timestamp:time})
+     if (!deleteFindChatObj) {
+      return res.status(404).json({
+        msg: "Chat not found",
+      });
+    }
+    if (deleteFindChatObj.imagePublicId) {
+
+      await cloudinary.uploader.destroy(
+        deleteFindChatObj.imagePublicId
+      );
+
+    }
      const deleteChatObj=await ChatUser.findByIdAndDelete(deleteFindChatObj._id)
      const io = req.app.locals.io;
      io.emit('messageDeleted', deleteChatObj);

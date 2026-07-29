@@ -18,6 +18,15 @@ const chatSchema = mongoose.Schema({
     chatId: {
       type:String
       },
+      image: {
+        type: String,
+        default: null,
+      },
+    
+      imagePublicId: {
+        type: String,
+        default: null,
+      },
     //   timestamp: { type: String, required: true } 
     timestamp: { 
         type: Date, 

@@ -1,8 +1,17 @@
 const path = require('path');
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
+const storage = multer.diskStorage({});
 const chatController = require('../controllers/chatController');
-router.post('/addSendMessage/:id', chatController.addSendMessage);
+
+const upload = multer({
+    storage: storage,
+    // limits:{fileSize:500000}
+  });
+  
+  router.use(express.static('public'));  
+router.post('/addSendMessage/:id',  upload.single("image"), chatController.addSendMessage);
 router.get('/getMessage/:id', chatController.getSendMessage);
 router.post('/addChatId',chatController.addChat)
 router.get('/getChatId',chatController.getChat)
