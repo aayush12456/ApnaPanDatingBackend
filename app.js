@@ -185,6 +185,66 @@ io.on('connection', (socket) => {
         io.emit("onlineUsers", Array.from(onlineUsers.keys()));
     });
 
+
+    // socket.on("callUser", (data) => {
+    //     console.log("callUser received:", data);
+      
+    //     const receiverSocketId = onlineUsers.get(data.receiverId?.toString());
+      
+    //     if (receiverSocketId) {
+    //       io.to(receiverSocketId).emit("incomingCall", data);
+    //     } else {
+    //       socket.emit("callFailed", { message: "User is offline" });
+    //     }
+    //   });
+    socket.on("callUser", (data) => {
+        console.log("========== callUser ==========");
+        console.log("Data:", data);
+        console.log("Current onlineUsers:", Array.from(onlineUsers.entries()));
+      
+        const receiverId = data.receiverId?.toString();
+        const receiverSocketId = onlineUsers.get(receiverId);
+      
+        if (receiverSocketId) {
+          console.log("✅ Receiver ONLINE hai. Socket ID:", receiverSocketId);
+          io.to(receiverSocketId).emit("incomingCall", data);
+        } else {
+          console.log("❌ Receiver OFFLINE hai. ID:", receiverId);
+          socket.emit("callFailed", { message: "User is offline" });
+        }
+        console.log("==============================");
+      });
+      // Receiver Accept karta hai
+      socket.on("acceptCall", (data) => {
+        console.log("acceptCall:", data);
+      
+        const callerSocketId = onlineUsers.get(data.callerId?.toString());
+        if (callerSocketId) {
+          io.to(callerSocketId).emit("callAccepted", data);
+        }
+      });
+      
+      // Receiver Reject karta hai
+      socket.on("rejectCall", (data) => {
+        console.log("rejectCall:", data);
+      
+        const callerSocketId = onlineUsers.get(data.callerId?.toString());
+        if (callerSocketId) {
+          io.to(callerSocketId).emit("callRejected", data);
+        }
+      });
+      
+      // Koi bhi End Call karta hai
+      socket.on("endCall", (data) => {
+        console.log("endCall:", data);
+      
+        const targetSocketId = onlineUsers.get(data.targetId?.toString());
+        if (targetSocketId) {
+          io.to(targetSocketId).emit("callEnded", data);
+        }
+      });
+
+
     // socket.on('disconnect', (reason) => {
     //     console.log('A user disconnected with socket ID:', socket.id,'reason is',reason);
     // });
