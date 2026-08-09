@@ -69,4 +69,6 @@ router.post('/addDarkMode/:id', userController.addDarkMode);
 router.get('/allRegisterUser/:id', userController.allRegisterUser);
 router.get('/allFieldRegisterUser/:id', userController.allFieldRegisterUser);
 router.delete('/deleteProfileFromAdminArray/:id', userController.deleteProfileFromAdminArray);
+router.post('/addChatTheme/:id', userController.addChatTheme);
+router.get('/getChatTheme/:id', userController.getChatTheme);
 module.exports = router;

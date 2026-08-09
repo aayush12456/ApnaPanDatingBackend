@@ -142,6 +142,12 @@ io.on('connection', (socket) => {
 
     })
 
+    socket.on('addColourTheme',(newId)=>{
+        io.emit('getColourTheme',newId)
+
+    })
+
+
     socket.on('addChatUsers', (chatUserObj) => {
         console.log('Received addChatUsers:', chatUserObj);
         // Avoid duplicate entries for same pair

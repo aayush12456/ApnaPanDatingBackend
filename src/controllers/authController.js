@@ -2067,9 +2067,115 @@ res.status(500).json({
     mssg:"Internal server error"
 
 });
-
-
 }
-
-
 };
+exports.addChatTheme = async (req, res) => {
+  console.log("req theme", req.body);
+
+  try {
+    const loginId = req.params.id;
+    const recieverId = req.body.recieverId;
+
+    const {
+      name,
+      header,
+      myBubble,
+      otherBubble,
+      myText,
+      otherText,
+      input,
+      icon,
+      background,
+      callBubble,
+    } = req.body;
+
+    const loginObj = await authUser.findById(loginId);
+    const recieverObj = await authUser.findById(recieverId);
+
+    if (!loginObj || !recieverObj) {
+      return res.status(404).json({ mssg: "User not found" });
+    }
+
+    const newTheme = {
+      loginId,
+      recieverId,
+      name,
+      header,
+      myBubble,
+      otherBubble,
+      myText,
+      otherText,
+      input,
+      icon,
+      background,
+      callBubble,
+    };
+
+    // ================= Login User =================
+    const loginIndex = loginObj.themeChat.findIndex(
+      (item) =>
+        (
+          item.loginId.toString() === loginId.toString() &&
+          item.recieverId.toString() === recieverId.toString()
+        ) ||
+        (
+          item.loginId.toString() === recieverId.toString() &&
+          item.recieverId.toString() === loginId.toString()
+        )
+    );
+
+    if (loginIndex !== -1) {
+      loginObj.themeChat[loginIndex] = newTheme;
+    } else {
+      loginObj.themeChat.push(newTheme);
+    }
+
+    // ================= Receiver User =================
+    const receiverIndex = recieverObj.themeChat.findIndex(
+      (item) =>
+        (
+          item.loginId.toString() === loginId.toString() &&
+          item.recieverId.toString() === recieverId.toString()
+        ) ||
+        (
+          item.loginId.toString() === recieverId.toString() &&
+          item.recieverId.toString() === loginId.toString()
+        )
+    );
+
+    if (receiverIndex !== -1) {
+      recieverObj.themeChat[receiverIndex] = newTheme;
+    } else {
+      recieverObj.themeChat.push(newTheme);
+    }
+
+    // Save both users
+    const loginUserTheme = await loginObj.save();
+    const recieverUserTheme = await recieverObj.save();
+
+    res.status(200).json({
+      loginThemeChat: loginUserTheme.themeChat,
+      recieverThemeChat: recieverUserTheme.themeChat,
+    });
+
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({
+      mssg: "Internal server error",
+    });
+  }
+};
+
+exports.getChatTheme=async(req,res)=>{ // function to update user
+  console.log("params:", req.params);
+
+  try{
+      const loginId=req.params.id
+      const recieverId=req.query.recieverId
+      const loginObj = await authUser.findById(loginId)
+      const recieverObj= await authUser.findById(recieverId)
+  res.json({loginThemeChat:loginObj.themeChat,recieverThemeChat: recieverObj.themeChat})
+  }catch(e){
+      res.status(404).send({mssg:'internal server error'})
+  }
+}

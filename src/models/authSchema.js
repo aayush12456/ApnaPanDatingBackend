@@ -319,27 +319,7 @@ postTyping:{
     ref: 'UserData',
   },
 },
-// postTyping:[
-//   {
-//     loginId: {
-//       type: mongoose.Schema.Types.ObjectId,
-//       ref: 'UserData',
-//     },
-//     senderId: {
-//       type: mongoose.Schema.Types.ObjectId,
-//       ref: 'UserData',
-//     },
-//     recieverId: {
-//       type: mongoose.Schema.Types.ObjectId,
-//       ref: 'UserData',
-//     },
-//     message: {
-//       type: String,
-//       ref: 'UserData',
-//     },
-//   }
- 
-// ],
+
 typing:[ // schema for like user id
 {
   type:Schema.Types.ObjectId,
@@ -432,6 +412,52 @@ recordChat: [
     timestamp: { type: String } 
   }
 ],
+themeChat: [
+  {
+    loginId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "authUser",
+    },
+    recieverId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "authUser",
+    },
+    name: {
+      type: String,
+    },
+    header: [
+      {
+        type: String,
+      },
+    ],
+    myBubble: {
+      type: String,
+    },
+    otherBubble: {
+      type: String,
+    },
+    myText: {
+      type: String,
+    },
+    otherText: {
+      type: String,
+    },
+    input: {
+      type: String,
+    },
+    icon: {
+      type: String,
+    },
+    background: {
+      type: String,
+    },
+    callBubble: {
+      type: String,
+    },
+  },
+],
+
+
 },
 
 );
