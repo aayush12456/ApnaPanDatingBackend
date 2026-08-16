@@ -219,6 +219,8 @@ exports.verifyOtp = async (req, res) => {
         _id: userDetails._id,
         dob: userDetails.DOB,
         appearanceMode: userDetails.appearanceMode,
+        email:userDetails.email,
+        phone:userDetails.phone
       },
       token: token,
     
