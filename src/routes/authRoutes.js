@@ -71,4 +71,5 @@ router.get('/allFieldRegisterUser/:id', userController.allFieldRegisterUser);
 router.delete('/deleteProfileFromAdminArray/:id', userController.deleteProfileFromAdminArray);
 router.post('/addChatTheme/:id', userController.addChatTheme);
 router.get('/getChatTheme/:id', userController.getChatTheme);
+router.post("/sendEmail",userController.sendEmail);
 module.exports = router;

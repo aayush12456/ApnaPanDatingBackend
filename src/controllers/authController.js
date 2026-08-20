@@ -9,8 +9,6 @@ const moment = require('moment-timezone');
 const ObjectId = mongoose.Types.ObjectId;
 const dotenv=require('dotenv')
 const jwt = require("jsonwebtoken");
-const {sendEmail}=require('../controllers/emailConfig')
-const {sendTwilioMessage}=require('../controllers/twilloUtils')
 const uploadSongs=require('../models/songSchema')
 dotenv.config()
 const client = twilio(process.env.TWILIO_SID,process.env. TWILIO_AUTH_TOKEN);
@@ -26,6 +24,34 @@ cloudinary.config({
 //     api_key: process.env.SONG_API_KEY,
 //     api_secret: process.env.SONG_API_SECRET
 //   });
+
+const transporter = nodemailer.createTransport({
+  host: "smtp-relay.brevo.com",
+  port: 2525,
+  secure:false,
+
+  auth: {
+    user:process.env.SMTP_USER,
+    pass:process.env.SMTP_PASS,
+  },
+  family:4,
+
+  connectionTimeout: 120000,
+  greetingTimeout: 120000,
+  socketTimeout: 120000,
+
+  tls: {
+    rejectUnauthorized: false,
+  },
+});
+transporter.verify((error, success) => {
+  if (error) {
+    console.log("SMTP ERROR =>", error);
+  } else {
+    console.log("SMTP SERVER READY");
+  }
+});
+
 exports.register = async (req, res) => {
   let cloudImageUrls = [];
   let cloudVideoUrl = '';
@@ -2181,3 +2207,504 @@ exports.getChatTheme=async(req,res)=>{ // function to update user
       res.status(404).send({mssg:'internal server error'})
   }
 }
+
+exports.sendEmail = async (req, res) => {
+  try {
+    const name = req.body.name;
+    const phone = req.body.phoneNumber;
+    const message = req.body.message;
+const email=req.body.email
+    const mailOptions = {
+      from: {
+        name:"ApnaPan",
+        address:process.env.SENDER,
+      },
+
+      to:"apnapan232@gmail.com",
+
+      subject: `New Contact Request from ${name}`,
+
+      html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8" />
+          <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0"
+          />
+          <title>New Customer Support Request</title>
+        </head>
+    
+        <body
+          style="
+            margin:0;
+            padding:0;
+            background:#f5f7fb;
+            font-family:Arial, Helvetica, sans-serif;
+            color:#1f2937;
+          "
+        >
+    
+          <table
+            width="100%"
+            cellpadding="0"
+            cellspacing="0"
+            border="0"
+            style="
+              background:#f5f7fb;
+              padding:35px 15px;
+            "
+          >
+            <tr>
+              <td align="center">
+    
+                <!-- Main Card -->
+                <table
+                  width="100%"
+                  cellpadding="0"
+                  cellspacing="0"
+                  border="0"
+                  style="
+                    max-width:680px;
+                    background:#ffffff;
+                    border-radius:16px;
+                    overflow:hidden;
+                    box-shadow:0 5px 25px rgba(15,23,42,0.08);
+                  "
+                >
+    
+                  <!-- Header -->
+                  <tr>
+                    <td
+                      style="
+                        background:#0f172a;
+                        padding:28px 25px;
+                      "
+                    >
+    
+                      <table
+                        width="100%"
+                        cellpadding="0"
+                        cellspacing="0"
+                        border="0"
+                      >
+                        <tr>
+    
+                          <td align="left">
+    
+                            <div
+                              style="
+                                font-size:23px;
+                                font-weight:700;
+                                color:#ffffff;
+                                letter-spacing:0.3px;
+                              "
+                            >
+                              ApnaPan
+                            </div>
+    
+                            <div
+                              style="
+                                margin-top:5px;
+                                font-size:13px;
+                                color:#cbd5e1;
+                              "
+                            >
+                              Dating &amp; Connections
+                            </div>
+    
+                          </td>
+    
+                          <td align="right">
+    
+                            <div
+                              style="
+                                display:inline-block;
+                                background:#ffffff;
+                                color:#0f172a;
+                                font-size:11px;
+                                font-weight:700;
+                                padding:7px 11px;
+                                border-radius:20px;
+                              "
+                            >
+                              SUPPORT
+                            </div>
+    
+                          </td>
+    
+                        </tr>
+                      </table>
+    
+                    </td>
+                  </tr>
+    
+    
+                  <!-- Title -->
+                  <tr>
+                    <td
+                      style="
+                        padding:30px 28px 10px 28px;
+                      "
+                    >
+    
+                      <div
+                        style="
+                          font-size:12px;
+                          font-weight:700;
+                          color:#64748b;
+                          letter-spacing:0.8px;
+                          text-transform:uppercase;
+                        "
+                      >
+                        Customer Support
+                      </div>
+    
+                      <h1
+                        style="
+                          margin:7px 0 0 0;
+                          font-size:24px;
+                          line-height:32px;
+                          color:#0f172a;
+                        "
+                      >
+                        New Customer Support Request
+                      </h1>
+    
+                      <p
+                        style="
+                          margin:9px 0 0 0;
+                          font-size:14px;
+                          line-height:22px;
+                          color:#64748b;
+                        "
+                      >
+                        A customer has contacted ApnaPan Support
+                        through the application.
+                      </p>
+    
+                    </td>
+                  </tr>
+    
+    
+                  <!-- Customer Information -->
+                  <tr>
+                    <td
+                      style="
+                        padding:20px 28px 0 28px;
+                      "
+                    >
+    
+                      <div
+                        style="
+                          font-size:14px;
+                          font-weight:700;
+                          color:#0f172a;
+                          margin-bottom:12px;
+                        "
+                      >
+                        Customer Information
+                      </div>
+    
+    
+                      <table
+                        width="100%"
+                        cellpadding="0"
+                        cellspacing="0"
+                        border="0"
+                        style="
+                          border:1px solid #e2e8f0;
+                          border-radius:12px;
+                          overflow:hidden;
+                          background:#f8fafc;
+                        "
+                      >
+    
+                        <!-- Customer Name -->
+                        <tr>
+    
+                          <td
+                            style="
+                              padding:15px 16px;
+                              border-bottom:1px solid #e2e8f0;
+                            "
+                          >
+    
+                            <div
+                              style="
+                                font-size:11px;
+                                font-weight:700;
+                                color:#64748b;
+                                text-transform:uppercase;
+                                letter-spacing:0.5px;
+                              "
+                            >
+                              Customer Name
+                            </div>
+    
+                            <div
+                              style="
+                                margin-top:5px;
+                                font-size:15px;
+                                font-weight:600;
+                                color:#0f172a;
+                              "
+                            >
+                              ${name}
+                            </div>
+    
+                          </td>
+    
+                        </tr>
+    
+    
+                        <!-- Email -->
+                        <tr>
+    
+                          <td
+                            style="
+                              padding:15px 16px;
+                              border-bottom:1px solid #e2e8f0;
+                            "
+                          >
+    
+                            <div
+                              style="
+                                font-size:11px;
+                                font-weight:700;
+                                color:#64748b;
+                                text-transform:uppercase;
+                                letter-spacing:0.5px;
+                              "
+                            >
+                              Email Address
+                            </div>
+    
+                            <div
+                              style="
+                                margin-top:5px;
+                                font-size:15px;
+                                font-weight:600;
+                                color:#0f172a;
+                                word-break:break-word;
+                              "
+                            >
+                              ${email}
+                            </div>
+    
+                          </td>
+    
+                        </tr>
+    
+    
+                        <!-- Phone -->
+                        <tr>
+    
+                          <td
+                            style="
+                              padding:15px 16px;
+                            "
+                          >
+    
+                            <div
+                              style="
+                                font-size:11px;
+                                font-weight:700;
+                                color:#64748b;
+                                text-transform:uppercase;
+                                letter-spacing:0.5px;
+                              "
+                            >
+                              Phone Number
+                            </div>
+    
+                            <div
+                              style="
+                                margin-top:5px;
+                                font-size:15px;
+                                font-weight:600;
+                                color:#0f172a;
+                              "
+                            >
+                              ${phone}
+                            </div>
+    
+                          </td>
+    
+                        </tr>
+    
+                      </table>
+    
+                    </td>
+                  </tr>
+    
+    
+                  <!-- Customer Message -->
+                  <tr>
+                    <td
+                      style="
+                        padding:28px 28px 0 28px;
+                      "
+                    >
+    
+                      <div
+                        style="
+                          font-size:14px;
+                          font-weight:700;
+                          color:#0f172a;
+                          margin-bottom:12px;
+                        "
+                      >
+                        Customer Message
+                      </div>
+    
+    
+                      <div
+                        style="
+                          background:#f8fafc;
+                          border:1px solid #e2e8f0;
+                          border-left:4px solid #0f172a;
+                          border-radius:10px;
+                          padding:18px;
+                        "
+                      >
+    
+                        <div
+                          style="
+                            font-size:14px;
+                            line-height:24px;
+                            color:#475569;
+                            word-break:break-word;
+                          "
+                        >
+                          ${message}
+                        </div>
+    
+                      </div>
+    
+                    </td>
+                  </tr>
+    
+    
+                  <!-- Action Notice -->
+                  <tr>
+                    <td
+                      style="
+                        padding:28px;
+                      "
+                    >
+    
+                      <div
+                        style="
+                          background:#f1f5f9;
+                          border-radius:10px;
+                          padding:17px 18px;
+                        "
+                      >
+    
+                        <div
+                          style="
+                            font-size:13px;
+                            font-weight:700;
+                            color:#0f172a;
+                            margin-bottom:5px;
+                          "
+                        >
+                          Support Team Action
+                        </div>
+    
+                        <div
+                          style="
+                            font-size:13px;
+                            line-height:21px;
+                            color:#64748b;
+                          "
+                        >
+                          Please review the customer's message and
+                          respond to the customer using the contact
+                          information provided above.
+                        </div>
+    
+                      </div>
+    
+                    </td>
+                  </tr>
+    
+    
+                  <!-- Footer -->
+                  <tr>
+                    <td
+                      align="center"
+                      style="
+                        background:#f8fafc;
+                        border-top:1px solid #e2e8f0;
+                        padding:22px 20px;
+                      "
+                    >
+    
+                      <div
+                        style="
+                          font-size:14px;
+                          font-weight:700;
+                          color:#0f172a;
+                        "
+                      >
+                        ApnaPan Support
+                      </div>
+    
+                      <div
+                        style="
+                          margin-top:6px;
+                          font-size:12px;
+                          line-height:19px;
+                          color:#64748b;
+                        "
+                      >
+                        Helping our community connect with confidence.
+                      </div>
+    
+                      <div
+                        style="
+                          margin-top:10px;
+                          font-size:11px;
+                          color:#94a3b8;
+                        "
+                      >
+                        This is an automated support notification
+                        from the ApnaPan application.
+                      </div>
+    
+                    </td>
+                  </tr>
+    
+                </table>
+    
+              </td>
+            </tr>
+          </table>
+    
+        </body>
+      </html>
+    `,
+    };
+
+    // Send email through Brevo SMTP
+    const info = await transporter.sendMail(mailOptions);
+
+    console.log("Brevo SMTP Email Sent:", info.messageId);
+
+    return res.status(200).send({
+      mssg: "Email sent successfully",
+      messageId: info.messageId,
+    });
+
+  } catch (e) {
+    console.error("Brevo SMTP Email Error =>", e);
+
+    return res.status(500).send({
+      mssg: "Email send failed",
+      error: e.message,
+    });
+  }
+};
