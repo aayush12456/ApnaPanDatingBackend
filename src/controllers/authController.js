@@ -10,6 +10,7 @@ const ObjectId = mongoose.Types.ObjectId;
 const dotenv=require('dotenv')
 const jwt = require("jsonwebtoken");
 const uploadSongs=require('../models/songSchema')
+const reportUser=require('../models/reportSchema')
 dotenv.config()
 const client = twilio(process.env.TWILIO_SID,process.env. TWILIO_AUTH_TOKEN);
 
@@ -2704,6 +2705,593 @@ const email=req.body.email
 
     return res.status(500).send({
       mssg: "Email send failed",
+      error: e.message,
+    });
+  }
+};
+
+//report
+exports.sendReport = async (req, res) => {
+  let imageUrl = null;
+  let imagePublicId = null;
+  try {
+    const {
+      senderName,
+      senderEmail,
+      recieverName,
+      recieverEmail,
+      message,
+      reportTitle
+    } = req.body;
+
+    // -----------------------------------
+    // 1. Basic validation
+    // -----------------------------------
+
+    if (
+      !senderName ||
+      !senderEmail ||
+      !recieverName ||
+      !recieverEmail ||
+      !message||
+      !reportTitle
+    ) {
+      return res.status(400).send({
+        mssg: "All required fields are required",
+      });
+    }
+
+    // -----------------------------------
+    // 2. Cloudinary image upload
+    // -----------------------------------
+
+
+    if (req.file) {
+
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "reports",
+      });
+      
+      console.log('result data',result)
+
+      if (!result || !result.secure_url) {
+        throw new Error("Cloudinary image upload failed");
+      }
+
+      imageUrl = result.secure_url;
+      imagePublicId = result.public_id;
+    }
+
+    // -----------------------------------
+    // 3. Save complete report in MongoDB
+    // -----------------------------------
+
+    const reportData = await reportUser.create({
+      senderName,
+      senderEmail,
+      recieverName,
+      recieverEmail,
+      message,
+      imageUrl,
+      imagePublicId,
+      reportTitle
+    });
+
+    // -----------------------------------
+    // 4. Email
+    // -----------------------------------
+
+    const mailOptions = {
+      from: {
+        name: "ApnaPan",
+        address: process.env.SENDER,
+      },
+
+      to: "apnapan232@gmail.com",
+
+      subject: `New Report Request from ${senderName}`,
+
+      html: `
+        <!DOCTYPE html>
+        <html>
+
+        <head>
+          <meta charset="UTF-8" />
+
+          <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0"
+          />
+
+          <title>New Report Request</title>
+        </head>
+
+        <body
+          style="
+            margin:0;
+            padding:0;
+            background:#f5f7fb;
+            font-family:Arial, Helvetica, sans-serif;
+            color:#1f2937;
+          "
+        >
+
+          <table
+            width="100%"
+            cellpadding="0"
+            cellspacing="0"
+            border="0"
+            style="
+              background:#f5f7fb;
+              padding:35px 15px;
+            "
+          >
+
+            <tr>
+
+              <td align="center">
+
+                <table
+                  width="100%"
+                  cellpadding="0"
+                  cellspacing="0"
+                  border="0"
+                  style="
+                    max-width:680px;
+                    background:#ffffff;
+                    border-radius:16px;
+                    overflow:hidden;
+                  "
+                >
+
+                  <!-- Header -->
+
+                  <tr>
+
+                    <td
+                      style="
+                        background:#0f172a;
+                        padding:28px 25px;
+                      "
+                    >
+
+                      <div
+                        style="
+                          font-size:23px;
+                          font-weight:700;
+                          color:#ffffff;
+                        "
+                      >
+                        ApnaPan
+                      </div>
+
+                      <div
+                        style="
+                          margin-top:5px;
+                          font-size:13px;
+                          color:#cbd5e1;
+                        "
+                      >
+                        Dating &amp; Connections
+                      </div>
+
+                    </td>
+
+                  </tr>
+
+                  <!-- Title -->
+
+                  <tr>
+
+                    <td
+                      style="
+                        padding:30px 28px 10px;
+                      "
+                    >
+
+                      <div
+                        style="
+                          font-size:12px;
+                          font-weight:700;
+                          color:#64748b;
+                          letter-spacing:0.8px;
+                          text-transform:uppercase;
+                        "
+                      >
+                        User Report
+                      </div>
+
+                      <h1
+                        style="
+                          margin:7px 0 0;
+                          font-size:24px;
+                          line-height:32px;
+                          color:#0f172a;
+                        "
+                      >
+                        New Report Submitted
+                      </h1>
+
+                      <p
+                        style="
+                          margin:9px 0 0;
+                          font-size:14px;
+                          line-height:22px;
+                          color:#64748b;
+                        "
+                      >
+                        A user has submitted a report through the ApnaPan application.
+                      </p>
+
+                    </td>
+
+                  </tr>
+
+                  <!-- Report Information -->
+
+                  <tr>
+
+                    <td
+                      style="
+                        padding:20px 28px 0;
+                      "
+                    >
+
+                      <div
+                        style="
+                          font-size:14px;
+                          font-weight:700;
+                          color:#0f172a;
+                          margin-bottom:12px;
+                        "
+                      >
+                        Report Information
+                      </div>
+
+                      <table
+                        width="100%"
+                        cellpadding="0"
+                        cellspacing="0"
+                        border="0"
+                        style="
+                          border:1px solid #e2e8f0;
+                          background:#f8fafc;
+                        "
+                      >
+
+                      <tr>
+
+                      <td style="padding:15px 16px;">
+
+                        <div
+                          style="
+                            font-size:11px;
+                            font-weight:700;
+                            color:#64748b;
+                            text-transform:uppercase;
+                          "
+                        >
+                        Complain Subject
+                        </div>
+
+                        <div
+                          style="
+                            margin-top:5px;
+                            font-size:15px;
+                            font-weight:600;
+                            color:#0f172a;
+                          "
+                        >
+                          ${reportTitle}
+                        </div>
+
+                      </td>
+
+                    </tr>
+
+
+                        <tr>
+
+                          <td style="padding:15px 16px;">
+
+                            <div
+                              style="
+                                font-size:11px;
+                                font-weight:700;
+                                color:#64748b;
+                                text-transform:uppercase;
+                              "
+                            >
+                              Sender Name
+                            </div>
+
+                            <div
+                              style="
+                                margin-top:5px;
+                                font-size:15px;
+                                font-weight:600;
+                                color:#0f172a;
+                              "
+                            >
+                              ${senderName}
+                            </div>
+
+                          </td>
+
+                        </tr>
+
+                        <tr>
+
+                          <td style="padding:15px 16px;">
+
+                            <div
+                              style="
+                                font-size:11px;
+                                font-weight:700;
+                                color:#64748b;
+                                text-transform:uppercase;
+                              "
+                            >
+                              Sender Email
+                            </div>
+
+                            <div
+                              style="
+                                margin-top:5px;
+                                font-size:15px;
+                                font-weight:600;
+                                color:#0f172a;
+                              "
+                            >
+                              ${senderEmail}
+                            </div>
+
+                          </td>
+
+                        </tr>
+
+                        <tr>
+
+                          <td style="padding:15px 16px;">
+
+                            <div
+                              style="
+                                font-size:11px;
+                                font-weight:700;
+                                color:#64748b;
+                                text-transform:uppercase;
+                              "
+                            >
+                              Reported User
+                            </div>
+
+                            <div
+                              style="
+                                margin-top:5px;
+                                font-size:15px;
+                                font-weight:600;
+                                color:#0f172a;
+                              "
+                            >
+                              ${recieverName}
+                            </div>
+
+                          </td>
+
+                        </tr>
+
+                        <tr>
+
+                          <td style="padding:15px 16px;">
+
+                            <div
+                              style="
+                                font-size:11px;
+                                font-weight:700;
+                                color:#64748b;
+                                text-transform:uppercase;
+                              "
+                            >
+                              Reported User Email
+                            </div>
+
+                            <div
+                              style="
+                                margin-top:5px;
+                                font-size:15px;
+                                font-weight:600;
+                                color:#0f172a;
+                              "
+                            >
+                              ${recieverEmail}
+                            </div>
+
+                          </td>
+
+                        </tr>
+
+                      </table>
+
+                    </td>
+
+                  </tr>
+
+                  <!-- Message -->
+
+                  <tr>
+
+                    <td
+                      style="
+                        padding:28px 28px 0;
+                      "
+                    >
+
+                      <div
+                        style="
+                          font-size:14px;
+                          font-weight:700;
+                          color:#0f172a;
+                          margin-bottom:12px;
+                        "
+                      >
+                        Report Message
+                      </div>
+
+                      <div
+                        style="
+                          background:#f8fafc;
+                          border:1px solid #e2e8f0;
+                          border-left:4px solid #0f172a;
+                          border-radius:10px;
+                          padding:18px;
+                        "
+                      >
+
+                        <div
+                          style="
+                            font-size:14px;
+                            line-height:24px;
+                            color:#475569;
+                            word-break:break-word;
+                          "
+                        >
+                          ${message}
+                        </div>
+
+                      </div>
+
+                    </td>
+
+                  </tr>
+
+                  ${
+                    imageUrl
+                      ? `
+                  <!-- Image -->
+
+                  <tr>
+
+                    <td
+                      style="
+                        padding:28px;
+                      "
+                    >
+
+                      <div
+                        style="
+                          font-size:14px;
+                          font-weight:700;
+                          color:#0f172a;
+                          margin-bottom:12px;
+                        "
+                      >
+                        Attached Image
+                      </div>
+
+                      <div
+                        style="
+                          border:1px solid #e2e8f0;
+                          border-radius:12px;
+                          padding:10px;
+                          background:#f8fafc;
+                        "
+                      >
+
+                        <img
+                          src="${imageUrl}"
+                          alt="Report attachment"
+                          style="
+                            display:block;
+                            width:100%;
+                            max-width:600px;
+                            height:auto;
+                            border-radius:8px;
+                          "
+                        />
+
+                      </div>
+                    </td>
+
+                  </tr>
+                  `
+                      : ""
+                  }
+
+                  <!-- Footer -->
+
+                  <tr>
+
+                    <td
+                      align="center"
+                      style="
+                        background:#f8fafc;
+                        border-top:1px solid #e2e8f0;
+                        padding:22px 20px;
+                      "
+                    >
+
+                      <div
+                        style="
+                          font-size:14px;
+                          font-weight:700;
+                          color:#0f172a;
+                        "
+                      >
+                        ApnaPan Support
+                      </div>
+
+                      <div
+                        style="
+                          margin-top:6px;
+                          font-size:12px;
+                          color:#64748b;
+                        "
+                      >
+                        Helping our community connect with confidence.
+                      </div>
+
+                    </td>
+
+                  </tr>
+
+                </table>
+
+              </td>
+
+            </tr>
+
+          </table>
+
+        </body>
+
+        </html>
+      `,
+    };
+
+    // -----------------------------------
+    // 5. Send email
+    // -----------------------------------
+
+    const info = await transporter.sendMail(mailOptions);
+
+    console.log("Report email sent:", info.messageId);
+
+    // -----------------------------------
+    // 6. Final response
+    // -----------------------------------
+
+    return res.status(200).send({
+      mssg: "Report submitted successfully",
+      report: reportData,
+      messageId: info.messageId,
+    });
+
+  } catch (e) {
+
+    console.error("Report Error =>", e);
+
+    return res.status(500).send({
+      mssg: "Report submission failed",
       error: e.message,
     });
   }

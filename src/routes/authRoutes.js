@@ -72,4 +72,5 @@ router.delete('/deleteProfileFromAdminArray/:id', userController.deleteProfileFr
 router.post('/addChatTheme/:id', userController.addChatTheme);
 router.get('/getChatTheme/:id', userController.getChatTheme);
 router.post("/sendEmail",userController.sendEmail);
+router.post("/sendReport",upload.single("reportImage"),userController.sendReport);
 module.exports = router;
