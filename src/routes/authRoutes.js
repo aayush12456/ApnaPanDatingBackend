@@ -74,4 +74,5 @@ router.get('/getChatTheme/:id', userController.getChatTheme);
 router.post("/sendEmail",userController.sendEmail);
 router.post("/sendReport",upload.single("reportImage"),userController.sendReport);
 router.post('/deleteAdminProfileUser/:id', userController.deleteAdminProfileUser);
+router.post("/replyEmail",userController.replyEmail);
 module.exports = router;

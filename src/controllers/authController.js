@@ -3426,3 +3426,292 @@ exports.deleteAdminProfileUser = async (req, res) => {
   }
 };
 
+//replyMail
+
+exports.replyEmail = async (req, res) => {
+  try {
+    const name = req.body.name;
+    const phone = req.body.phoneNumber;
+    const message = req.body.message;
+const email=req.body.email
+const replyMessage=req.body.replyMessage
+    const mailOptions = {
+      from: {
+        name:"ApnaPan",
+        address:process.env.SENDER,
+      },
+
+      to:email,
+
+      subject: `Reply from ApnaPan Support`,
+
+      html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8" />
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1.0"
+        />
+        <title>ApnaPan Support</title>
+      </head>
+      
+      <body
+        style="
+          margin:0;
+          padding:0;
+          background:#f5f7fb;
+          font-family:Arial, Helvetica, sans-serif;
+          color:#1f2937;
+        "
+      >
+      
+        <table
+          width="100%"
+          cellpadding="0"
+          cellspacing="0"
+          border="0"
+          style="background:#f5f7fb;padding:35px 15px;"
+        >
+          <tr>
+            <td align="center">
+      
+              <!-- Main Container -->
+              <table
+                width="100%"
+                cellpadding="0"
+                cellspacing="0"
+                border="0"
+                style="
+                  max-width:650px;
+                  background:#ffffff;
+                  border-radius:14px;
+                  overflow:hidden;
+                "
+              >
+      
+                <!-- Header -->
+                <tr>
+                  <td
+                    style="
+                      background:#0f172a;
+                      padding:25px 28px;
+                    "
+                  >
+                    <div
+                      style="
+                        font-size:24px;
+                        font-weight:700;
+                        color:#ffffff;
+                      "
+                    >
+                      ApnaPan
+                    </div>
+      
+                    <div
+                      style="
+                        margin-top:5px;
+                        font-size:13px;
+                        color:#cbd5e1;
+                      "
+                    >
+                      Support Team
+                    </div>
+                  </td>
+                </tr>
+      
+                <!-- Content -->
+                <tr>
+                  <td style="padding:32px 28px;">
+      
+                    <div
+                      style="
+                        font-size:22px;
+                        font-weight:700;
+                        color:#0f172a;
+                      "
+                    >
+                      Hello ${name || "there"},
+                    </div>
+      
+                 
+                    <!-- Support Reply -->
+                    <div
+                      style="
+                        margin-top:24px;
+                        background:#f8fafc;
+                        border:1px solid #e2e8f0;
+                        border-radius:10px;
+                        padding:20px;
+                      "
+                    >
+      
+                      <div
+                        style="
+                          font-size:12px;
+                          font-weight:700;
+                          color:#64748b;
+                          text-transform:uppercase;
+                          letter-spacing:0.5px;
+                          margin-bottom:10px;
+                        "
+                      >
+                        ApnaPan Support
+                      </div>
+      
+                      <div
+                        style="
+                          font-size:15px;
+                          line-height:25px;
+                          color:#334155;
+                          white-space:pre-line;
+                        "
+                      >
+                        ${replyMessage}
+                      </div>
+      
+                    </div>
+      
+                    <!-- Original Request -->
+                    <div
+                      style="
+                        margin-top:25px;
+                        padding-top:20px;
+                        border-top:1px solid #e2e8f0;
+                      "
+                    >
+      
+                      <div
+                        style="
+                          font-size:12px;
+                          font-weight:700;
+                          color:#64748b;
+                          text-transform:uppercase;
+                          letter-spacing:0.5px;
+                          margin-bottom:8px;
+                        "
+                      >
+                        Your Original Message
+                      </div>
+      
+                      <div
+                        style="
+                          font-size:14px;
+                          line-height:22px;
+                          color:#64748b;
+                          background:#f8fafc;
+                          padding:14px;
+                          border-radius:8px;
+                          white-space:pre-line;
+                        "
+                      >
+                        ${message}
+                      </div>
+      
+                    </div>
+      
+                    <p
+                      style="
+                        margin:25px 0 0 0;
+                        font-size:14px;
+                        line-height:22px;
+                        color:#64748b;
+                      "
+                    >
+                      If you have any further questions or need additional
+                      assistance, simply reply to this email and our support team
+                      will be happy to help.
+                    </p>
+      
+                    <p
+                      style="
+                        margin:25px 0 0 0;
+                        font-size:15px;
+                        line-height:24px;
+                        color:#334155;
+                      "
+                    >
+                      Best regards,<br/>
+                      <strong>ApnaPan Support Team</strong>
+                    </p>
+      
+                  </td>
+                </tr>
+      
+                <!-- Footer -->
+                <tr>
+                  <td
+                    align="center"
+                    style="
+                      background:#f8fafc;
+                      border-top:1px solid #e2e8f0;
+                      padding:20px;
+                    "
+                  >
+      
+                    <div
+                      style="
+                        font-size:13px;
+                        font-weight:700;
+                        color:#0f172a;
+                      "
+                    >
+                      ApnaPan
+                    </div>
+      
+                    <div
+                      style="
+                        margin-top:5px;
+                        font-size:12px;
+                        color:#94a3b8;
+                      "
+                    >
+                      Dating &amp; Connections
+                    </div>
+      
+                    <div
+                      style="
+                        margin-top:10px;
+                        font-size:11px;
+                        line-height:18px;
+                        color:#94a3b8;
+                      "
+                    >
+                      You're receiving this email because you contacted
+                      ApnaPan Support.
+                    </div>
+      
+                  </td>
+                </tr>
+      
+              </table>
+      
+            </td>
+          </tr>
+        </table>
+      
+      </body>
+      </html>
+            `,
+    };
+
+    // Send email through Brevo SMTP
+    const info = await transporter.sendMail(mailOptions);
+
+    console.log("Brevo SMTP Email Sent:", info.messageId);
+
+    return res.status(200).send({
+      mssg: "Email sent successfully",
+      messageId: info.messageId,
+    });
+
+  } catch (e) {
+    console.error("Brevo SMTP Email Error =>", e);
+
+    return res.status(500).send({
+      mssg: "Email send failed",
+      error: e.message,
+    });
+  }
+};
