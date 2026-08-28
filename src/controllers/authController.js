@@ -84,6 +84,7 @@ exports.register = async (req, res) => {
           }
 
           cloudVideoUrl = videoResult.secure_url;
+          // cloudVideoId = videoResult.public_id;
       }
   }
         const UserData = new authUser({
@@ -165,7 +166,6 @@ exports.login = async (req, res) => {
     //   }
       const allLoginUserArray=await loginIdUser.find()
       const loginIdUserArray = allLoginUserArray.map((loginItem) => loginItem.loginId);
-      const loginIds=loginIdUserArray.filter((item)=>item.toString()!==data._id.toString())
       res.status(201).send({
         mssg: 'Login Successfully',
         response: 201,
@@ -1897,43 +1897,84 @@ exports.allFieldRegisterUser = async (req, res) => {
   }
 };
 
-exports.deleteProfileFromAdminArray = async (req, res) => {     
+
+exports.deleteProfileFromAdminArray = async (req, res) => {
   try {
-      const adminOpenuserId = req.params.id; 
-      const deletedUserId = req.query.deleteUserId;
-      const userObj = await authUser.findById(adminOpenuserId);
-      console.log('user obj in delee',userObj)
-      console.log('delete user id in array',deletedUserId)
-      
-      await authUser.updateOne(
-          { _id:adminOpenuserId },
-          {
-            $pull: {
-         skipUser:ObjectId.isValid(deletedUserId) ? new ObjectId(deletedUserId) : deletedUserId,
-         matchUser:ObjectId.isValid(deletedUserId) ? new ObjectId(deletedUserId) : deletedUserId,
-         visitors: {
-          visitorId: ObjectId.isValid(deletedUserId) ? new ObjectId(deletedUserId) : deletedUserId
-      },
-      likes:ObjectId.isValid(deletedUserId) ? new ObjectId(deletedUserId) : deletedUserId,
-      onlineLikeUser:ObjectId.isValid(deletedUserId) ? new ObjectId(deletedUserId) : deletedUserId,
-      anotherMatchUser:ObjectId.isValid(deletedUserId) ? new ObjectId(deletedUserId) : deletedUserId,
-      likeFilterData:ObjectId.isValid(deletedUserId) ? new ObjectId(deletedUserId) : deletedUserId,
-      selfOnlineLikeUser:ObjectId.isValid(deletedUserId) ? new ObjectId(deletedUserId) : deletedUserId,
-      likeUser:ObjectId.isValid(deletedUserId) ? new ObjectId(deletedUserId) : deletedUserId,
-      anotherRecordMessageId:ObjectId.isValid(deletedUserId) ? new ObjectId(deletedUserId) : deletedUserId,
-      recordMessageId:ObjectId.isValid(deletedUserId) ? new ObjectId(deletedUserId) : deletedUserId,
-      typing:ObjectId.isValid(deletedUserId) ? new ObjectId(deletedUserId) : deletedUserId,
-            }
-          }
-      );
-      const updatedUser = await authUser.findById(adminOpenuserId);
-      res.status(200).json({ mssg: "User updated successfully" ,deleteId:deletedUserId,obj:updatedUser});
+    const adminOpenuserId = req.params.id;
+    const deletedUserId = req.body.deleteUserId;
+
+    // Validate admin user ID
+    if (!adminOpenuserId || !ObjectId.isValid(adminOpenuserId)) {
+      return res.status(400).json({
+        mssg: "Invalid admin user ID",
+      });
+    }
+
+    // Validate deleted user ID
+    if (!deletedUserId || !ObjectId.isValid(deletedUserId)) {
+      return res.status(400).json({
+        mssg: "Invalid or missing deleteUserId",
+        deleteId: deletedUserId,
+      });
+    }
+
+    const adminId = new ObjectId(adminOpenuserId);
+    const deleteId = new ObjectId(deletedUserId);
+
+    const userObj = await authUser.findById(adminId);
+
+    if (!userObj) {
+      return res.status(404).json({
+        mssg: "Admin user not found",
+      });
+    }
+
+    console.log("user obj in delete:", userObj);
+    console.log("delete user id in array:", deletedUserId);
+
+    await authUser.updateOne(
+      { _id: adminId },
+      {
+        $pull: {
+          skipUser: deleteId,
+          matchUser: deleteId,
+
+          visitors: {
+            visitorId: deleteId,
+          },
+
+          likes: deleteId,
+          onlineLikeUser: deleteId,
+          anotherMatchUser: deleteId,
+          likeFilterData: deleteId,
+          selfOnlineLikeUser: deleteId,
+          likeUser: deleteId,
+          anotherRecordMessageId: deleteId,
+          recordMessageId: deleteId,
+          typing: deleteId,
+        },
+      }
+    );
+
+    const updatedUser = await authUser.findById(adminId);
+
+    return res.status(200).json({
+      mssg: "User updated successfully",
+      deleteId: deletedUserId,
+      obj: updatedUser,
+    });
 
   } catch (error) {
-      console.error(error);
-      res.status(500).json({ mssg: "Internal server error" });
+    console.error("deleteProfileFromAdminArray error:", error);
+
+    return res.status(500).json({
+      mssg: "Internal server error",
+      error: error.message,
+    });
   }
 };
+
+
 
 exports.addNotifyUser = async (req, res) => {
   try {
@@ -3296,3 +3337,92 @@ exports.sendReport = async (req, res) => {
     });
   }
 };
+
+
+exports.deleteAdminProfileUser = async (req, res) => {
+  try {
+    const id = req.params.id;
+    console.log('coming id',id)
+    const userObj=await authUser.findById(id)
+    if (!userObj) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    // Delete the video from Cloudinary
+    if (userObj.videoUrl) {
+      const videoUrl = userObj.videoUrl;
+      const publicId = videoUrl.split('/').slice(-2).join('/').split('.')[0];
+      await cloudinary.uploader.destroy(publicId, { resource_type: 'video' });
+    }
+    if (userObj.images && Array.isArray(userObj.images)) {
+      for (const imageUrl of userObj.images) {
+        const publicId = imageUrl.split('/').slice(-2).join('/').split('.')[0];
+        await cloudinary.uploader.destroy(publicId, { resource_type: 'image' });
+      }
+    }
+
+     const deletedUser = await authUser.findByIdAndDelete(id);
+    if (!deletedUser) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    // Remove the visitor object from the visitors array of all users where visitorId matches the deleted user's ID
+  //   await authUser.updateMany( // ye keval data delete karne ke liye
+  //     { 'visitors.visitorId': id },
+  //     { $pull: { visitors: { visitorId: id } } }
+  //   );
+  await authUser.updateMany(
+      {
+        $or: [
+          { 'visitors.visitorId': id },
+          { 'filterData': id },
+          { 'likes': id },
+          { 'likeFilterData': id },
+          { 'likeUser': id },
+          { 'skipUser': id },
+          { 'matchUser': id },
+          { 'anotherMatchUser': id },
+          { 'anotherLikeUser': id },
+          { 'hideRemainMatch': id },
+          { 'onlineLikeUser': id },
+          { 'likeMatch': id },
+          { 'anotherLikeMatch': id },
+          { 'onlineSkipUser': id },
+          { 'selfOnlineLikeUser': id },
+          { 'recordMessageId': id },
+          { 'anotherRecordMessageId': id },
+          { 'typing': id },
+        ]
+      },
+      {
+        $pull: {
+          visitors: { visitorId: id },
+          filterData:id,
+          likes:id,
+          likeFilterData:id,
+          likeUser:id,
+          skipUser: id,
+          matchUser:id,
+          anotherMatchUser:id,
+          anotherLikeUser:id,
+          onlineLikeUser:id,
+          likeMatch:id,
+          anotherLikeMatch:id,
+          onlineSkipUser:id,
+          selfOnlineLikeUser:id,
+          recordMessageId:id,
+          anotherRecordMessageId:id,
+          typing:id
+
+        }
+      }
+    );
+    const allUser=await authUser.find()
+    const remainingUser=allUser.filter((user)=>user._id!==userObj._id)
+    res.status(200).json({ msg: "User deleted successfully",users:remainingUser });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ msg: "Internal server error" });
+  }
+};
+

@@ -147,6 +147,11 @@ io.on('connection', (socket) => {
 
     })
 
+    socket.on('deleteRegisterUser',(newId)=>{
+        io.emit('getRegisterUser',newId)
+
+    })
+  
 
     socket.on('addChatUsers', (chatUserObj) => {
         console.log('Received addChatUsers:', chatUserObj);

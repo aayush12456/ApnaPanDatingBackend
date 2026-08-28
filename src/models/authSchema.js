@@ -61,6 +61,7 @@ images: [{
   type:String,
   // required:true
 }],
+
   // interest: {
   //   type: String,
   //   required: true,
@@ -252,6 +253,7 @@ matchNotify:{ //to store id of loginUser
   videoUrl:{
     type:String
   },
+
   PersonalProfileModalHeading:{
     type:String
   },
