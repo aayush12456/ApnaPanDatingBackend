@@ -75,4 +75,6 @@ router.post("/sendEmail",userController.sendEmail);
 router.post("/sendReport",upload.single("reportImage"),userController.sendReport);
 router.post('/deleteAdminProfileUser/:id', userController.deleteAdminProfileUser);
 router.post("/replyEmail",userController.replyEmail);
+router.get('/getReportUser/:id', userController.getReportUser);
+router.post('/deleteReportUser/:id', userController.deleteReportUser);
 module.exports = router;

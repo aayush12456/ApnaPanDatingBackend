@@ -3715,3 +3715,77 @@ const replyMessage=req.body.replyMessage
     });
   }
 };
+
+exports.getReportUser = async (req, res) => {
+  try{
+const id=req.params.id
+const allReportUser=await reportUser.find()
+console.log('id in report',id)
+return res.status(200).send({
+  mssg: "fetch report user successfully",
+  reportUser:allReportUser,
+});
+
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({
+      mssg: "Internal server error",
+    });
+  }
+}
+exports.deleteReportUser = async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    console.log("report id", id);
+
+    const userObj = await reportUser.findById(id);
+
+    if (!userObj) {
+      return res.status(404).json({
+        msg: "Report not found",
+      });
+    }
+
+    // Delete image from Cloudinary only if imageUrl exists
+    if (userObj.imageUrl) {
+      try {
+        const publicId = userObj.imageUrl
+          .split("/")
+          .slice(-2)
+          .join("/")
+          .split(".")[0];
+
+        await cloudinary.uploader.destroy(publicId, {
+          resource_type: "image",
+        });
+      } catch (cloudinaryError) {
+        console.log("Cloudinary delete error:", cloudinaryError);
+        // Image delete fail hone par bhi report delete hone denge
+      }
+    }
+
+    // Delete report from MongoDB
+    const deletedUser = await reportUser.findByIdAndDelete(id);
+
+    if (!deletedUser) {
+      return res.status(404).json({
+        msg: "Report not found",
+      });
+    }
+
+    // Get remaining reports
+    const remainReportUser = await reportUser.find();
+
+    return res.status(200).json({
+      msg: "Report deleted successfully",
+      reportUser: remainReportUser,
+    });
+  } catch (e) {
+    console.log("Delete report error:", e);
+
+    return res.status(500).json({
+      mssg: "Internal server error",
+    });
+  }
+};

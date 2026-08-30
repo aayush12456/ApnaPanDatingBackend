@@ -152,7 +152,11 @@ io.on('connection', (socket) => {
 
     })
   
+    socket.on('deleteReportUser',(newId)=>{
+        io.emit('getReportUser',newId)
 
+    })
+  
     socket.on('addChatUsers', (chatUserObj) => {
         console.log('Received addChatUsers:', chatUserObj);
         // Avoid duplicate entries for same pair
