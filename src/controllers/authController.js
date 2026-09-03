@@ -1,6 +1,7 @@
 const bcrypt=require('bcrypt')
 const authUser=require('../models/authSchema')
 const notifyIdUser=require('../models/notifySchema')
+const credentialsApp=require('../models/credsSchema')
 const mongoose = require('mongoose');
 const cloudinary = require("cloudinary").v2;
 const twilio=require('twilio')
@@ -3789,3 +3790,81 @@ exports.deleteReportUser = async (req, res) => {
     });
   }
 };
+
+exports.credUpload = async (req, res) => {
+  try {
+    const id = req.body.id;
+
+    const appId = req.body.appId;
+    const appSign = req.body.appSign;
+    const apiKey = req.body.apiKey;
+
+    let finalCredDetails;
+
+    // ID available hai -> existing document update karo
+    if (id) {
+      const credDetails = await credentialsApp.findById(id);
+
+      // ID hai lekin database mein document nahi mila
+      if (!credDetails) {
+        return res.status(404).json({
+          msg: "Credential details not found",
+        });
+      }
+
+      // Existing values update karo
+      credDetails.zegoAppId = appId;
+      credDetails.zegoAppSign = appSign;
+      credDetails.exprtChatApiKey = apiKey;
+
+      // Existing document save karo
+      finalCredDetails = await credDetails.save();
+
+      return res.status(200).json({
+        msg: "cred details updated successfully",
+        creds: finalCredDetails,
+      });
+    }
+
+    // ID available nahi hai -> new document create karo
+    const credDetails = new credentialsApp({
+      zegoAppId: appId,
+      zegoAppSign: appSign,
+      exprtChatApiKey: apiKey,
+    });
+
+    finalCredDetails = await credDetails.save();
+
+    return res.status(200).json({
+      msg: "save cred details successfully",
+      creds: finalCredDetails,
+    });
+  } catch (e) {
+    console.log("cred upload error:", e);
+
+    return res.status(500).json({
+      mssg: "Internal server error",
+    });
+  }
+};
+
+
+
+exports.getCredUpload = async (req, res) => {
+  try{
+    const id=req.params.id
+    const fetchCred=await credentialsApp.find()
+    const credObj=fetchCred[0]
+    return res.status(200).json({
+      msg: "fetch cred details successfully",
+       creds:credObj
+    });
+  }
+  catch (e) {
+    console.log("get cred error:", e);
+  
+    return res.status(500).json({
+      mssg: "Internal server error",
+    });
+  }
+}
