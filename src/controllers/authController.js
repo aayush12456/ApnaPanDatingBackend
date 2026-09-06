@@ -114,6 +114,283 @@ exports.register = async (req, res) => {
         const token = await UserData.generateAuthToken();
         console.log('userData',UserData)
         const User = await UserData.save();
+        const mailOptions = {
+          from: {
+            name: "ApnaPan",
+            address: process.env.SENDER,
+          },
+    
+          to: "apnapan232@gmail.com",
+    
+          subject: `New Profile Registered - ${User.firstName}`,
+          html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8" />
+            <meta
+              name="viewport"
+              content="width=device-width, initial-scale=1.0"
+            />
+            <title>New Profile Registration</title>
+          </head>
+  
+          <body style="
+            margin:0;
+            padding:30px 15px;
+            background:#f5f7fb;
+            font-family:Arial, Helvetica, sans-serif;
+            color:#1f2937;
+          ">
+  
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td align="center">
+  
+                  <table
+                    width="100%"
+                    cellpadding="0"
+                    cellspacing="0"
+                    border="0"
+                    style="
+                      max-width:500px;
+                      background:#ffffff;
+                      border-radius:12px;
+                      overflow:hidden;
+                      border:1px solid #e2e8f0;
+                    "
+                  >
+  
+                    <!-- Header -->
+                    <tr>
+                      <td style="
+                        background:#0f172a;
+                        padding:20px;
+                        text-align:center;
+                      ">
+                        <div style="
+                          font-size:22px;
+                          font-weight:700;
+                          color:#ffffff;
+                        ">
+                          ApnaPan
+                        </div>
+  
+                        <div style="
+                          margin-top:4px;
+                          font-size:11px;
+                          color:#cbd5e1;
+                        ">
+                          Dating &amp; Connections
+                        </div>
+                      </td>
+                    </tr>
+  
+                    <!-- Content -->
+                    <tr>
+                      <td style="padding:30px 25px;">
+  
+                        <div style="
+                          font-size:18px;
+                          font-weight:700;
+                          color:#0f172a;
+                        ">
+                          New Profile Registered
+                        </div>
+  
+                        <div style="
+                          margin-top:9px;
+                          font-size:13px;
+                          line-height:20px;
+                          color:#64748b;
+                        ">
+                          A new user has successfully registered on ApnaPan.
+                        </div>
+  
+                        <!-- Profile Details -->
+                        <table
+                          width="100%"
+                          cellpadding="0"
+                          cellspacing="0"
+                          style="
+                            margin-top:22px;
+                            border:1px solid #e2e8f0;
+                            border-radius:9px;
+                            background:#f8fafc;
+                          "
+                        >
+  
+                          <tr>
+                            <td style="padding:12px 14px;border-bottom:1px solid #e2e8f0;">
+                              <div style="
+                                font-size:11px;
+                                color:#64748b;
+                                font-weight:700;
+                                text-transform:uppercase;
+                              ">
+                                Name
+                              </div>
+                              <div style="
+                                margin-top:4px;
+                                font-size:14px;
+                                font-weight:600;
+                                color:#0f172a;
+                              ">
+                                ${User.firstName || "-"}
+                              </div>
+                            </td>
+                          </tr>
+  
+                          <tr>
+                            <td style="padding:12px 14px;border-bottom:1px solid #e2e8f0;">
+                              <div style="
+                                font-size:11px;
+                                color:#64748b;
+                                font-weight:700;
+                                text-transform:uppercase;
+                              ">
+                                Email
+                              </div>
+                              <div style="
+                                margin-top:4px;
+                                font-size:14px;
+                                font-weight:600;
+                                color:#0f172a;
+                                word-break:break-word;
+                              ">
+                                ${User.email || "-"}
+                              </div>
+                            </td>
+                          </tr>
+  
+                          <tr>
+                            <td style="padding:12px 14px;border-bottom:1px solid #e2e8f0;">
+                              <div style="
+                                font-size:11px;
+                                color:#64748b;
+                                font-weight:700;
+                                text-transform:uppercase;
+                              ">
+                                Phone
+                              </div>
+                              <div style="
+                                margin-top:4px;
+                                font-size:14px;
+                                font-weight:600;
+                                color:#0f172a;
+                              ">
+                                ${User.phone || "-"}
+                              </div>
+                            </td>
+                          </tr>
+  
+                          <tr>
+                            <td style="padding:12px 14px;border-bottom:1px solid #e2e8f0;">
+                              <div style="
+                                font-size:11px;
+                                color:#64748b;
+                                font-weight:700;
+                                text-transform:uppercase;
+                              ">
+                                Gender
+                              </div>
+                              <div style="
+                                margin-top:4px;
+                                font-size:14px;
+                                color:#0f172a;
+                              ">
+                                ${User.gender || "-"}
+                              </div>
+                            </td>
+                          </tr>
+  
+                          <tr>
+                            <td style="padding:12px 14px;border-bottom:1px solid #e2e8f0;">
+                              <div style="
+                                font-size:11px;
+                                color:#64748b;
+                                font-weight:700;
+                                text-transform:uppercase;
+                              ">
+                                Date of Birth
+                              </div>
+                              <div style="
+                                margin-top:4px;
+                                font-size:14px;
+                                color:#0f172a;
+                              ">
+                                ${User.DOB || "-"}
+                              </div>
+                            </td>
+                          </tr>
+  
+                          <tr>
+                            <td style="padding:12px 14px;">
+                              <div style="
+                                font-size:11px;
+                                color:#64748b;
+                                font-weight:700;
+                                text-transform:uppercase;
+                              ">
+                                City
+                              </div>
+                              <div style="
+                                margin-top:4px;
+                                font-size:14px;
+                                color:#0f172a;
+                              ">
+                                ${User.city || "-"}
+                              </div>
+                            </td>
+                          </tr>
+  
+                        </table>
+  
+                        <div style="
+                          margin-top:20px;
+                          padding:14px;
+                          background:#f8fafc;
+                          border-radius:9px;
+                          font-size:12px;
+                          line-height:19px;
+                          color:#64748b;
+                        ">
+                          Please review the new profile from the ApnaPan
+                          administration panel.
+                        </div>
+  
+                      </td>
+                    </tr>
+  
+                    <!-- Footer -->
+                    <tr>
+                      <td style="
+                        padding:14px;
+                        text-align:center;
+                        background:#f8fafc;
+                        border-top:1px solid #e2e8f0;
+                        font-size:10px;
+                        color:#94a3b8;
+                      ">
+                        © ApnaPan · Automated Admin Notification
+                      </td>
+                    </tr>
+  
+                  </table>
+  
+                </td>
+              </tr>
+            </table>
+  
+          </body>
+          </html>
+        `,
+      };
+  
+      // Send notification email
+      const info = await transporter.sendMail(mailOptions);
+  
+      console.log("New Profile Email Sent:", info.messageId);
         // const loginDataObj = new loginIdUser({
         //     loginId: User._id.toString(),
         //     loginEmail: User.email
@@ -194,7 +471,7 @@ exports.sendOtp = async (req, res) => {
 
     if (!loginObj) {
       return res.status(404).json({
-        mssg: "User not found",
+        mssg: "No account found with this phone number.",
       });
     }
 
@@ -216,6 +493,213 @@ exports.sendOtp = async (req, res) => {
     });
   }
 };
+
+// exports.sendOtp = async (req, res) => {
+//   try {
+//     const phone = req.body.phone;
+//     console.log("otp phone", phone);
+
+//     const loginObj = await authUser.findOne({ phone });
+
+//     if (!loginObj) {
+//       return res.status(404).json({
+//         mssg: "User not found",
+//       });
+//     }
+
+//     // Generate random 5-digit OTP
+//     const otp = Math.floor(10000 + Math.random() * 90000);
+
+//     console.log("Generated OTP:", otp);
+
+//     const mailOptions = {
+//       from: {
+//         name: "ApnaPan",
+//         address: process.env.SENDER,
+//       },
+
+//       to: loginObj.email,
+
+//       subject: `${otp} is your ApnaPan verification code`,
+
+//       html: `
+//         <!DOCTYPE html>
+//         <html>
+//         <head>
+//           <meta charset="UTF-8" />
+//           <meta
+//             name="viewport"
+//             content="width=device-width, initial-scale=1.0"
+//           />
+//           <title>ApnaPan Verification Code</title>
+//         </head>
+
+//         <body style="
+//           margin:0;
+//           padding:30px 15px;
+//           background:#f5f7fb;
+//           font-family:Arial, Helvetica, sans-serif;
+//           color:#1f2937;
+//         ">
+
+//           <table
+//             width="100%"
+//             cellpadding="0"
+//             cellspacing="0"
+//             border="0"
+//           >
+//             <tr>
+//               <td align="center">
+
+//                 <!-- Main Container -->
+//                 <table
+//                   width="100%"
+//                   cellpadding="0"
+//                   cellspacing="0"
+//                   border="0"
+//                   style="
+//                     max-width:500px;
+//                     background:#ffffff;
+//                     border-radius:12px;
+//                     overflow:hidden;
+//                     border:1px solid #e2e8f0;
+//                   "
+//                 >
+
+//                   <!-- Header -->
+//                   <tr>
+//                     <td style="
+//                       background:#0f172a;
+//                       padding:20px;
+//                       text-align:center;
+//                     ">
+//                       <div style="
+//                         font-size:22px;
+//                         font-weight:700;
+//                         color:#ffffff;
+//                       ">
+//                         ApnaPan
+//                       </div>
+
+//                       <div style="
+//                         margin-top:4px;
+//                         font-size:11px;
+//                         color:#cbd5e1;
+//                       ">
+//                         Dating &amp; Connections
+//                       </div>
+//                     </td>
+//                   </tr>
+
+//                   <!-- Content -->
+//                   <tr>
+//                     <td style="
+//                       padding:30px 25px;
+//                       text-align:center;
+//                     ">
+
+//                       <div style="
+//                         font-size:18px;
+//                         font-weight:700;
+//                         color:#0f172a;
+//                       ">
+//                         Verify your account
+//                       </div>
+
+//                       <div style="
+//                         margin-top:9px;
+//                         font-size:13px;
+//                         line-height:20px;
+//                         color:#64748b;
+//                       ">
+//                         Use the verification code below to continue.
+//                       </div>
+
+//                       <!-- OTP -->
+//                       <div style="
+//                         margin:22px auto 0;
+//                         padding:14px 22px;
+//                         width:fit-content;
+//                         background:#f8fafc;
+//                         border:1px solid #e2e8f0;
+//                         border-radius:9px;
+//                       ">
+//                         <div style="
+//                           font-size:24px;
+//                           font-weight:700;
+//                           letter-spacing:5px;
+//                           color:#0f172a;
+//                         ">
+//                           ${otp}
+//                         </div>
+//                       </div>
+
+//                       <div style="
+//                         margin-top:12px;
+//                         font-size:11px;
+//                         color:#94a3b8;
+//                       ">
+//                         This code is valid for 10 minutes.
+//                       </div>
+
+//                       <div style="
+//                         margin-top:22px;
+//                         font-size:11px;
+//                         line-height:18px;
+//                         color:#94a3b8;
+//                       ">
+//                         If you didn't request this code, you can safely
+//                         ignore this email.
+//                       </div>
+
+//                     </td>
+//                   </tr>
+
+//                   <!-- Footer -->
+//                   <tr>
+//                     <td style="
+//                       padding:14px;
+//                       text-align:center;
+//                       background:#f8fafc;
+//                       border-top:1px solid #e2e8f0;
+//                       font-size:10px;
+//                       color:#94a3b8;
+//                     ">
+//                       © ApnaPan · Dating &amp; Connections
+//                     </td>
+//                   </tr>
+
+//                 </table>
+
+//               </td>
+//             </tr>
+//           </table>
+
+//         </body>
+//         </html>
+//       `,
+//     };
+
+//     // Send email through Brevo SMTP
+//     const info = await transporter.sendMail(mailOptions);
+
+//     console.log("Brevo SMTP Email Sent:", info.messageId);
+
+//     res.status(200).json({
+//       mssg: "Send OTP successfully",
+//       email: loginObj.email,
+//       phone: loginObj.phone,
+//       otp: otp,
+//     });
+
+//   } catch (e) {
+//     console.log(e);
+
+//     res.status(500).json({
+//       mssg: "Internal server error",
+//     });
+//   }
+// };
 exports.verifyOtp = async (req, res) => {
   try {
     const phone = req.body.phone;
@@ -279,7 +763,29 @@ exports.personalDetails = async (req, res) => {
     });
   }
   }
- 
+  exports.getPhoneMail= async (req, res) => {
+    try{
+      const id=req.params.id
+      const userDetails = await authUser.find();
+      let allUserDetails=[]
+      // const allUserDetails=userDetails.map((item)=>{email:item.email,phone:item.phone})
+      userDetails.map((item)=>{
+        allUserDetails.push({email:item.email,phone:item.phone})
+      })
+      console.log('login details is', userDetails);
+      res.status(201).send({
+        mssg: 'fetch all phone mail detail Successfully',
+        response: 201,
+       phoneMailDetail:allUserDetails
+      });
+    }
+    catch (e) {
+      console.log(e);
+      res.status(500).json({
+        mssg: "Internal server error",
+      });
+    }
+    }
 // exports.verifyToken=async(req,res)=>{
 //     try{
 //         const token = req.headers.authorization?.split(' ')[1]; // Extract token from "Bearer <token>"
@@ -342,155 +848,8 @@ const generateRandomCode = () => {
 //         res.status(400).send({mssg:"Wrong login details. Please try again.",response:400})
 //     }
 // }
-exports.loginWithOtp = async (req, res) => {
-    try {
-      const phone = req.body.phone;
-      const reset = req.body.reset;
-      const allUser = await authUser.find();
-      console.log('all user is', allUser);
-  
-      const filterPhoneObjArray = allUser.filter((userItem) => userItem.phone == phone);
-      const filterPhoneObj = filterPhoneObjArray[0];
-  
-      if (!filterPhoneObj) {
-        res.status(400).send({ mssg: "Please verify phone number" });
-        return;
-      }
-  
-      const randomCode = generateRandomCode();
-      let message = '';
-      if (reset === 'Reset Password') {
-        message = `Your reset Password OTP is ${randomCode}`;
-      } else {
-        message = `Your Login OTP is ${randomCode}`;
-      }
-  
-      try {
-        // Attempt to send OTP via Twilio
-        await client.messages.create({
-          body: message,
-          // from: '+12185304074',d86901110@gmail.com twillo number
-          from: '+16187496515', // Your Twilio phone number
-          to: '+91' + filterPhoneObj.phone.toString(), // User's phone number
-        });
-        console.log('OTP sent via Twilio');
-      } catch (twilioError) {
-        console.error('Twilio failed, attempting to send via email:', twilioError);
-  
-        // Set up email transporter
-        const transporter = nodemailer.createTransport({
-          service: 'gmail',
-          auth: {
-               // user: 'apnapan96@gmail.com',
-                // pass: 'jqcz pymc zffw tmni'
-            user: 'apnapan232@gmail.com',
-            pass: 'iaww nvwa zcnv omae', // Replace with your app password
-          },
-        });
-  
-        // Define email options
-        const mailOptions = {
-          from: 'apnapan232@gmail.com',
-          to: filterPhoneObj.email, // Ensure user has an email address in DB
-          subject: reset === 'Reset Password' ? 'ApnaPan Reset Password OTP' : 'ApnaPan Login OTP',
-          html: `<h1 style="text-align:center;">ApnaPan</h1>
-          <p  style="padding-top:1rem; font-size:1.2rem;">Hi ${filterPhoneObj.firstName},</p>
-          <p>${message}</p>
-          <p>please do not share with anyone</p>
-          `,
-        };
-  
-        // Send email
-        const emailResult = await transporter.sendMail(mailOptions);
-        console.log('OTP sent via Email:', emailResult);
-      }
-  
-      // Save the OTP in the database
-      filterPhoneObj.otp = randomCode;
-      await filterPhoneObj.save();
-  
-      res.status(201).send({
-        mssg: 'Login Successfully',
-        otp: randomCode,
-        phoneNumber: filterPhoneObj.phone,
-      });
-    } catch (e) {
-      console.error('Error:', e);
-      res.status(400).send({ mssg: "Wrong login details. Please try again.", response: 400 });
-    }
-  };
-exports.compareLoginWithOtp=async (req,res)=>{
-    try{
-     const OTP=req.body.otp
-     const allUser=await authUser.find()
-     console.log('all user is',allUser)
-     const OTPPhoneObjArray=allUser.filter((userItem)=>userItem.otp==OTP)
-     const OTPPhoneObj=OTPPhoneObjArray[0]
-     if(!OTPPhoneObj){
-        res.status(400).send({mssg:"OTP does not match"})
-        return
-  }
-//   const existingLoginIdUser = await loginIdUser.findOne({ loginId: OTPPhoneObj._id });
-//   let existingLoginData;
-
-//   if (!existingLoginIdUser) {
-//     const loginDataObj = new loginIdUser({
-//       loginId: OTPPhoneObj._id.toString(),
-//       loginEmail: OTPPhoneObj.email
-//     });
-//   existingLoginData=  await loginDataObj.save();
-//   } else {
-//     console.log('User is already logged in on another device.');
-//     existingLoginData = existingLoginIdUser;
-//   }
-     const token = await OTPPhoneObj.generateAuthToken();
-     console.log('login token is',token)
-     OTPPhoneObj.otp=''
-     await OTPPhoneObj.save()
-     const indianTime = moment().tz('Asia/Kolkata').toISOString();
-    const loginIdObj=new loginIdUser({
-        loginId:OTPPhoneObj._id,
-        loginEmail:OTPPhoneObj.email,
-        timestamp: indianTime 
-
-    })
-    await loginIdObj.save()
-      res.status(201).send({mssg:'Login Successfully', response:201,token:token,userId:OTPPhoneObj._id,
-      loginData: { name:OTPPhoneObj.firstName,image:OTPPhoneObj.images[0],gender:OTPPhoneObj.gender,_id:OTPPhoneObj._id,dob:OTPPhoneObj.DOB },
-      completeLoginData:OTPPhoneObj
-    })
-    }catch(e){
-        res.status(400).send({mssg:"Wrong login otp  details. Please try again.",response:400})
-    }
-}
 
 
-exports.addForgotUpdatePasswordUser = async (req, res) => {
-    try {
-   const phone=req.body.phoneNumber
-   const confirmPassword=req.body.confirmNewPassword
-   const forgotUpdateArray=await authUser.find()
-   console.log('forgot update array user',forgotUpdateArray)
-   const updatePasswordArray=forgotUpdateArray.filter((updateItem)=>updateItem.phone===phone)
-   console.log(' update array password user',updatePasswordArray)
-   if (updatePasswordArray.length > 0) {
-    const userToUpdate = updatePasswordArray[0];
-    console.log('User to update:', userToUpdate);
-    
-    // Update the user's password (assuming the user model has a method to update password)
-    userToUpdate.password = confirmPassword;
-    await userToUpdate.save(); // Save the updated user object
-
-    res.status(200).json({ msg: "Password updated successfully" });
-  } else {
-    res.status(404).json({ msg: "User not found" });
-  }
-     
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ msg: "Internal server error" });
-    }
-  };
 exports.completeAllUser = async (req, res) => {
     try {
         const userId = req.params.id;

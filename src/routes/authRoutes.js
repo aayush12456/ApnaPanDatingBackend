@@ -17,10 +17,8 @@ router.post('/login', userController.login);
 router.post('/sendOtp', userController.sendOtp);
 router.post('/verifyOtp', userController.verifyOtp);
 router.get('/personalDetails/:id', userController.personalDetails);
+router.get('/getPhoneMail/:id', userController.getPhoneMail);
 // router.post('/verifyToken', userController.verifyToken);
-router.post('/loginWithOtp', userController.loginWithOtp)
-router.post('/verifyOtp', userController.compareLoginWithOtp)
-router.post('/forgotUpdatePasswordUser', userController.addForgotUpdatePasswordUser);
 router.get('/completeAllUser/:id', userController.completeAllUser)
 router.post('/updateUser/:id', userController.updateauthUser);
 router.get('/allUsers/:id', userController.allUser);
