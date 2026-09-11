@@ -40,9 +40,6 @@ router.get('/getOnlineSkipUser/:id', userController.getOnlineSkipUser);
 router.delete('/deleteSkipProfile/:id', userController.deleteSkipProfileUser); 
 router.post('/addOnlineLikeUser/:id', userController.addOnlineLikeUser);
 router.get('/getOnlineLikeUser/:id', userController.getOnlineLikeUser);
-
-// router.post('/addVisitorNotify/:id',userController.addVisitorNotifyUser)
-// router.get('/getVisitorNotify/:id',userController.getVisitorNotifyUser)
 router.post('/notifyUser/:id',userController.addNotifyUser)
 router.get('/notifyUser/:id',userController.getNotifyUser)
 router.post('/deleteNotifyUser/:id',userController.deleteNotifyUser)
@@ -51,7 +48,6 @@ router.post('/deleteMultipleVisitorNotify/:id',userController.deleteMultipleNoti
 
 router.post('/addBlockChatIdUser/:id', userController.blockChatIdUser);
 router.get('/getBlockChatIdUser/:id', userController.getBlockChatIdUser);
-// router.delete('/deleteBlockIdUser/:id', userController.deleteBlockUser );
 router.post('/deleteBlockIdUser/:id', userController.deleteBlockUser );
 router.post('/updatePasswordUser/:id', userController.addUpdatePasswordUser);
 router.delete('/deleteProfileUser/:id', userController.deleteProfileUser);

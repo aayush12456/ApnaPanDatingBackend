@@ -1506,7 +1506,7 @@ exports.addOnlineSkipUser = async (req, res) => {
       const onlinePersonSkipUser = await userObj.save();
 
       console.log('online person skip', onlinePersonSkipUser);
-      res.json({ onlineSkip: onlinePersonSkipUser });
+      res.json({ onlineSkip: onlinePersonSkipUser,skipUserId:onlinePersonUserId});
 
   } catch (error) {
       console.error(error);
