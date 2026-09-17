@@ -277,6 +277,22 @@ io.on('connection', (socket) => {
         }
     
     });
+   
+socket.on("logoutUser", (userId) => {
+    const id = userId?.toString();
+
+    if (!id) return;
+
+    // onlineUsers Map se loginId remove
+    onlineUsers.delete(id);
+
+    console.log("User Logout :", id);
+
+    // Sabhi connected clients ko updated online users bhejo
+    io.emit("onlineUsers", Array.from(onlineUsers.keys()));
+});
+
+
 });
 
 module.exports = { io };
