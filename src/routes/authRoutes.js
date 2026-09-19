@@ -4,7 +4,6 @@ const multer = require('multer');
 const router = express.Router();
 const storage = multer.diskStorage({});
 const userController = require('../controllers/authController');
-const authMiddleware=require('../middleware/authMiddleware')
 // Initialize multer middleware
 const upload = multer({
   storage: storage,
@@ -27,7 +26,6 @@ router.post('/addSkipUser/:id',userController.addSkipUser)
 router.get('/getSkipUser/:id',userController.getSkipUser)
 router.post('/addMatchUser/:id', userController.addMatchUser);
 router.get('/getMatchUser/:id', userController.getMatchUser);
-router.post('/addLikeSmsText/:id', userController.addLikeSmsTextUser);
 router.post('/addLikeCount/:id', userController.addLikeCountUser);
 router.get('/getLikeCount/:id', userController.getLikeCountUser);
 router.post('/deleteLikeCount', userController.deleteCounterUser);
@@ -43,13 +41,11 @@ router.get('/getOnlineLikeUser/:id', userController.getOnlineLikeUser);
 router.post('/notifyUser/:id',userController.addNotifyUser)
 router.get('/notifyUser/:id',userController.getNotifyUser)
 router.post('/deleteNotifyUser/:id',userController.deleteNotifyUser)
-router.post('/deleteVisitorNotify/:id',userController.deleteVisitorNotifyUser)
 router.post('/deleteMultipleVisitorNotify/:id',userController.deleteMultipleNotifyUsers)
 
 router.post('/addBlockChatIdUser/:id', userController.blockChatIdUser);
 router.get('/getBlockChatIdUser/:id', userController.getBlockChatIdUser);
 router.post('/deleteBlockIdUser/:id', userController.deleteBlockUser );
-router.post('/updatePasswordUser/:id', userController.addUpdatePasswordUser);
 router.delete('/deleteProfileUser/:id', userController.deleteProfileUser);
 router.post('/addDeactivateUser/:id', userController.addDeactivationUser);
 router.get('/getDeactivateUser/:id', userController.getDeactivateUser);

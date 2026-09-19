@@ -4,7 +4,6 @@ const notifyIdUser=require('../models/notifySchema')
 const credentialsApp=require('../models/credsSchema')
 const mongoose = require('mongoose');
 const cloudinary = require("cloudinary").v2;
-const twilio=require('twilio')
 const nodemailer = require('nodemailer');
 const moment = require('moment-timezone');
 const ObjectId = mongoose.Types.ObjectId;
@@ -13,7 +12,7 @@ const jwt = require("jsonwebtoken");
 const uploadSongs=require('../models/songSchema')
 const reportUser=require('../models/reportSchema')
 dotenv.config()
-const client = twilio(process.env.TWILIO_SID,process.env. TWILIO_AUTH_TOKEN);
+
 
 cloudinary.config({ 
     cloud_name:process.env.CLOUD_NAME,
@@ -58,8 +57,8 @@ exports.register = async (req, res) => {
   let cloudImageUrls = [];
   let cloudVideoUrl = '';
     try {
-      console.log("Uploaded file:", req.files.images);
-      console.log("Uploaded video file", req.files.videoUrl);
+      // console.log("Uploaded file:", req.files.images);
+      // console.log("Uploaded video file", req.files.videoUrl);
       if (req.files.images) {
         for (const file of req.files.images) {
             const result = await cloudinary.uploader.upload(file.path, {
@@ -112,7 +111,7 @@ exports.register = async (req, res) => {
         });
 
         const token = await UserData.generateAuthToken();
-        console.log('userData',UserData)
+        // console.log('userData',UserData)
         const User = await UserData.save();
         const mailOptions = {
           from: {
@@ -391,11 +390,7 @@ exports.register = async (req, res) => {
       const info = await transporter.sendMail(mailOptions);
   
       console.log("New Profile Email Sent:", info.messageId);
-        // const loginDataObj = new loginIdUser({
-        //     loginId: User._id.toString(),
-        //     loginEmail: User.email
-        //   });
-        // existingLoginData=  await loginDataObj.save();
+    
         res.status(201).send({ mssg: 'Data registered Successfully',token: token,registerUser:User});
     } catch (e) {
         console.error(e);
@@ -413,37 +408,18 @@ exports.login = async (req, res) => {
       res.status(400).send({ mssg: "Email does not exist", response: 400 });
       return;
     }
-    const indianTime = moment().tz('Asia/Kolkata').toISOString();
-    const loginIdObj=new loginIdUser({
-        loginId:userEmail._id,
-        loginEmail:userEmail.email,
-        timestamp: indianTime 
 
-    })
-    await loginIdObj.save()
+
     const isMatch = await bcrypt.compare(password, userEmail.password);
-    console.log('password login data', isMatch);
+    // console.log('password login data', isMatch);
 
     if (isMatch) {
       const token = await userEmail.generateAuthToken();
-      console.log('login token is', token);
+      // console.log('login token is', token);
 
       const data = await authUser.findOne({ email: email });
-    //   const existingLoginIdUser = await loginIdUser.findOne({ loginId: data._id });
-    //   let existingLoginData;
-
-    //   if (!existingLoginIdUser) {
-    //     const loginDataObj = new loginIdUser({
-    //       loginId: data._id.toString(),
-    //       loginEmail: data.email
-    //     });
-    //   existingLoginData=  await loginDataObj.save();
-    //   } else {
-    //     console.log('User is already logged in on another device.');
-    //     existingLoginData = existingLoginIdUser;
-    //   }
-      const allLoginUserArray=await loginIdUser.find()
-      const loginIdUserArray = allLoginUserArray.map((loginItem) => loginItem.loginId);
+   
+      
       res.status(201).send({
         mssg: 'Login Successfully',
         response: 201,
@@ -451,8 +427,7 @@ exports.login = async (req, res) => {
         token: token,
         userId: userEmail._id,
         completeLoginData:data,
-        // existingLoginData: existingLoginData
-        loginIdUserArray:loginIdUserArray
+ 
       });
     } else {
       res.status(400).send({ mssg: "Wrong password", response: 400 });
@@ -462,6 +437,39 @@ exports.login = async (req, res) => {
   }
 };
 
+// exports.sendOtp = async (req, res) => {
+//   try {
+//     const phone = req.body.phone;
+//     // console.log("otp phone", phone);
+
+//     const loginObj = await authUser.findOne({ phone });
+
+//     if (!loginObj) {
+//       return res.status(404).json({
+//         mssg: "No account found with this phone number.",
+//       });
+//     }
+
+//     // Generate random 6-digit OTP
+//     const otp = Math.floor(10000 + Math.random() * 90000);
+
+//     console.log("Generated OTP:", otp);
+
+//     res.status(200).json({
+//       mssg: "Send OTP successfully",
+//       email: loginObj.email,
+//       phone: loginObj.phone,
+//       otp: otp,
+//     });
+//   } catch (e) {
+//     console.log(e);
+//     res.status(500).json({
+//       mssg: "Internal server error",
+//     });
+//   }
+// };
+
+//mail sendOtp
 exports.sendOtp = async (req, res) => {
   try {
     const phone = req.body.phone;
@@ -471,14 +479,187 @@ exports.sendOtp = async (req, res) => {
 
     if (!loginObj) {
       return res.status(404).json({
-        mssg: "No account found with this phone number.",
+        mssg: "User not found",
       });
     }
 
-    // Generate random 6-digit OTP
+    // Generate random 5-digit OTP
     const otp = Math.floor(10000 + Math.random() * 90000);
 
     console.log("Generated OTP:", otp);
+
+    const mailOptions = {
+      from: {
+        name: "ApnaPan",
+        address: process.env.SENDER,
+      },
+
+      to: loginObj.email,
+
+      subject: `${otp} is your ApnaPan verification code`,
+
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8" />
+          <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0"
+          />
+          <title>ApnaPan Verification Code</title>
+        </head>
+
+        <body style="
+          margin:0;
+          padding:30px 15px;
+          background:#f5f7fb;
+          font-family:Arial, Helvetica, sans-serif;
+          color:#1f2937;
+        ">
+
+          <table
+            width="100%"
+            cellpadding="0"
+            cellspacing="0"
+            border="0"
+          >
+            <tr>
+              <td align="center">
+
+                <!-- Main Container -->
+                <table
+                  width="100%"
+                  cellpadding="0"
+                  cellspacing="0"
+                  border="0"
+                  style="
+                    max-width:500px;
+                    background:#ffffff;
+                    border-radius:12px;
+                    overflow:hidden;
+                    border:1px solid #e2e8f0;
+                  "
+                >
+
+                  <!-- Header -->
+                  <tr>
+                    <td style="
+                      background:#0f172a;
+                      padding:20px;
+                      text-align:center;
+                    ">
+                      <div style="
+                        font-size:22px;
+                        font-weight:700;
+                        color:#ffffff;
+                      ">
+                        ApnaPan
+                      </div>
+
+                      <div style="
+                        margin-top:4px;
+                        font-size:11px;
+                        color:#cbd5e1;
+                      ">
+                        Dating &amp; Connections
+                      </div>
+                    </td>
+                  </tr>
+
+                  <!-- Content -->
+                  <tr>
+                    <td style="
+                      padding:30px 25px;
+                      text-align:center;
+                    ">
+
+                      <div style="
+                        font-size:18px;
+                        font-weight:700;
+                        color:#0f172a;
+                      ">
+                        Verify your account
+                      </div>
+
+                      <div style="
+                        margin-top:9px;
+                        font-size:13px;
+                        line-height:20px;
+                        color:#64748b;
+                      ">
+                        Use the verification code below to continue.
+                      </div>
+
+                      <!-- OTP -->
+                      <div style="
+                        margin:22px auto 0;
+                        padding:14px 22px;
+                        width:fit-content;
+                        background:#f8fafc;
+                        border:1px solid #e2e8f0;
+                        border-radius:9px;
+                      ">
+                        <div style="
+                          font-size:24px;
+                          font-weight:700;
+                          letter-spacing:5px;
+                          color:#0f172a;
+                        ">
+                          ${otp}
+                        </div>
+                      </div>
+
+                      <div style="
+                        margin-top:12px;
+                        font-size:11px;
+                        color:#94a3b8;
+                      ">
+                        This code is valid for 10 minutes.
+                      </div>
+
+                      <div style="
+                        margin-top:22px;
+                        font-size:11px;
+                        line-height:18px;
+                        color:#94a3b8;
+                      ">
+                        If you didn't request this code, you can safely
+                        ignore this email.
+                      </div>
+
+                    </td>
+                  </tr>
+
+                  <!-- Footer -->
+                  <tr>
+                    <td style="
+                      padding:14px;
+                      text-align:center;
+                      background:#f8fafc;
+                      border-top:1px solid #e2e8f0;
+                      font-size:10px;
+                      color:#94a3b8;
+                    ">
+                      © ApnaPan · Dating &amp; Connections
+                    </td>
+                  </tr>
+
+                </table>
+
+              </td>
+            </tr>
+          </table>
+
+        </body>
+        </html>
+      `,
+    };
+
+    // Send email through Brevo SMTP
+    const info = await transporter.sendMail(mailOptions);
+
+    console.log("Brevo SMTP Email Sent:", info.messageId);
 
     res.status(200).json({
       mssg: "Send OTP successfully",
@@ -486,220 +667,16 @@ exports.sendOtp = async (req, res) => {
       phone: loginObj.phone,
       otp: otp,
     });
+
   } catch (e) {
     console.log(e);
+
     res.status(500).json({
       mssg: "Internal server error",
     });
   }
 };
 
-// exports.sendOtp = async (req, res) => {
-//   try {
-//     const phone = req.body.phone;
-//     console.log("otp phone", phone);
-
-//     const loginObj = await authUser.findOne({ phone });
-
-//     if (!loginObj) {
-//       return res.status(404).json({
-//         mssg: "User not found",
-//       });
-//     }
-
-//     // Generate random 5-digit OTP
-//     const otp = Math.floor(10000 + Math.random() * 90000);
-
-//     console.log("Generated OTP:", otp);
-
-//     const mailOptions = {
-//       from: {
-//         name: "ApnaPan",
-//         address: process.env.SENDER,
-//       },
-
-//       to: loginObj.email,
-
-//       subject: `${otp} is your ApnaPan verification code`,
-
-//       html: `
-//         <!DOCTYPE html>
-//         <html>
-//         <head>
-//           <meta charset="UTF-8" />
-//           <meta
-//             name="viewport"
-//             content="width=device-width, initial-scale=1.0"
-//           />
-//           <title>ApnaPan Verification Code</title>
-//         </head>
-
-//         <body style="
-//           margin:0;
-//           padding:30px 15px;
-//           background:#f5f7fb;
-//           font-family:Arial, Helvetica, sans-serif;
-//           color:#1f2937;
-//         ">
-
-//           <table
-//             width="100%"
-//             cellpadding="0"
-//             cellspacing="0"
-//             border="0"
-//           >
-//             <tr>
-//               <td align="center">
-
-//                 <!-- Main Container -->
-//                 <table
-//                   width="100%"
-//                   cellpadding="0"
-//                   cellspacing="0"
-//                   border="0"
-//                   style="
-//                     max-width:500px;
-//                     background:#ffffff;
-//                     border-radius:12px;
-//                     overflow:hidden;
-//                     border:1px solid #e2e8f0;
-//                   "
-//                 >
-
-//                   <!-- Header -->
-//                   <tr>
-//                     <td style="
-//                       background:#0f172a;
-//                       padding:20px;
-//                       text-align:center;
-//                     ">
-//                       <div style="
-//                         font-size:22px;
-//                         font-weight:700;
-//                         color:#ffffff;
-//                       ">
-//                         ApnaPan
-//                       </div>
-
-//                       <div style="
-//                         margin-top:4px;
-//                         font-size:11px;
-//                         color:#cbd5e1;
-//                       ">
-//                         Dating &amp; Connections
-//                       </div>
-//                     </td>
-//                   </tr>
-
-//                   <!-- Content -->
-//                   <tr>
-//                     <td style="
-//                       padding:30px 25px;
-//                       text-align:center;
-//                     ">
-
-//                       <div style="
-//                         font-size:18px;
-//                         font-weight:700;
-//                         color:#0f172a;
-//                       ">
-//                         Verify your account
-//                       </div>
-
-//                       <div style="
-//                         margin-top:9px;
-//                         font-size:13px;
-//                         line-height:20px;
-//                         color:#64748b;
-//                       ">
-//                         Use the verification code below to continue.
-//                       </div>
-
-//                       <!-- OTP -->
-//                       <div style="
-//                         margin:22px auto 0;
-//                         padding:14px 22px;
-//                         width:fit-content;
-//                         background:#f8fafc;
-//                         border:1px solid #e2e8f0;
-//                         border-radius:9px;
-//                       ">
-//                         <div style="
-//                           font-size:24px;
-//                           font-weight:700;
-//                           letter-spacing:5px;
-//                           color:#0f172a;
-//                         ">
-//                           ${otp}
-//                         </div>
-//                       </div>
-
-//                       <div style="
-//                         margin-top:12px;
-//                         font-size:11px;
-//                         color:#94a3b8;
-//                       ">
-//                         This code is valid for 10 minutes.
-//                       </div>
-
-//                       <div style="
-//                         margin-top:22px;
-//                         font-size:11px;
-//                         line-height:18px;
-//                         color:#94a3b8;
-//                       ">
-//                         If you didn't request this code, you can safely
-//                         ignore this email.
-//                       </div>
-
-//                     </td>
-//                   </tr>
-
-//                   <!-- Footer -->
-//                   <tr>
-//                     <td style="
-//                       padding:14px;
-//                       text-align:center;
-//                       background:#f8fafc;
-//                       border-top:1px solid #e2e8f0;
-//                       font-size:10px;
-//                       color:#94a3b8;
-//                     ">
-//                       © ApnaPan · Dating &amp; Connections
-//                     </td>
-//                   </tr>
-
-//                 </table>
-
-//               </td>
-//             </tr>
-//           </table>
-
-//         </body>
-//         </html>
-//       `,
-//     };
-
-//     // Send email through Brevo SMTP
-//     const info = await transporter.sendMail(mailOptions);
-
-//     console.log("Brevo SMTP Email Sent:", info.messageId);
-
-//     res.status(200).json({
-//       mssg: "Send OTP successfully",
-//       email: loginObj.email,
-//       phone: loginObj.phone,
-//       otp: otp,
-//     });
-
-//   } catch (e) {
-//     console.log(e);
-
-//     res.status(500).json({
-//       mssg: "Internal server error",
-//     });
-//   }
-// };
 exports.verifyOtp = async (req, res) => {
   try {
     const phone = req.body.phone;
@@ -713,12 +690,12 @@ exports.verifyOtp = async (req, res) => {
       });
     }
 
-    // ===== Same loginIdUser code as login API =====
+
    
     // ===== Generate Token =====
     const token = await userDetails.generateAuthToken();
 
-    console.log("login token is", token);
+    // console.log("login token is", token);
 
     res.status(201).send({
       mssg: "Login Successfully",
@@ -749,7 +726,7 @@ exports.personalDetails = async (req, res) => {
   try{
     const id=req.params.id
     const userDetails = await authUser.findOne({ _id:id });
-    console.log('login details is', userDetails);
+    // console.log('login details is', userDetails);
     res.status(201).send({
       mssg: 'fetch personal detail Successfully',
       response: 201,
@@ -772,7 +749,7 @@ exports.personalDetails = async (req, res) => {
       userDetails.map((item)=>{
         allUserDetails.push({email:item.email,phone:item.phone})
       })
-      console.log('login details is', userDetails);
+      // console.log('login details is', userDetails);
       res.status(201).send({
         mssg: 'fetch all phone mail detail Successfully',
         response: 201,
@@ -786,68 +763,7 @@ exports.personalDetails = async (req, res) => {
       });
     }
     }
-// exports.verifyToken=async(req,res)=>{
-//     try{
-//         const token = req.headers.authorization?.split(' ')[1]; // Extract token from "Bearer <token>"
-//         console.log('header token',token)
 
-//         if (!token) {
-//           return res.status(401).json({ error: 'No token provided' });
-//         }
-      
-//         jwt.verify(token, 'registerData', (err, decoded) => {
-//           if (err) {
-//             return res.status(401).json({ error: 'Invalid or expired token' });
-//           }
-      
-//           res.status(200).json({ message: 'Token is valid', userId: decoded.id });
-//         });
-//     }catch(e){
-//         res.status(400).send({ mssg: "Wrong login details. Please try again.", response: 400 });
-//     }
-// }
-const generateRandomCode = () => {
-    return Math.floor(10000 + Math.random() * 90000).toString();
-};
-
-// exports.loginWithOtp=async (req,res)=>{
-//     try{
-//      const phone=req.body.phone
-//      const reset=req.body.reset
-//      const allUser=await authUser.find()
-//      console.log('all user is',allUser)
-//      const filterPhoneObjArray=allUser.filter((userItem)=>userItem.phone==phone)
-//      const filterPhoneObj=filterPhoneObjArray[0]
-//      if(!filterPhoneObj){
-//         res.status(400).send({mssg:"please verify phone number"})
-//         return
-//   }
-  
-//   const randomCode = generateRandomCode(); 
-//   let message=''
-//   if(reset=='Reset Password'){
-//     message=`Your reset Password OTP is ${randomCode}`
-//   }
-//   else{
-//     message=`Your Login OTP is ${randomCode}`
-//   }
-  
-//   await client.messages.create({
-//     body:message,
-//     //aayushtapadia28@gmail.com or aayushtapadia2001@gmail.com generate twillo phone number
-//     // from: '+12513335644', // Your Twilio phone number
-//     from: '+12185304074',
-//     to: '+91'+filterPhoneObj.phone.toString() // Phone number of likeUserObj
-// });
-// filterPhoneObj.otp=randomCode
-//     await filterPhoneObj.save();
-//       res.status(201).send({mssg:'Login Successfully',otp:randomCode,phoneNumber:filterPhoneObj.phone})
-    
-   
-//     }catch(e){
-//         res.status(400).send({mssg:"Wrong login details. Please try again.",response:400})
-//     }
-// }
 
 
 exports.completeAllUser = async (req, res) => {
@@ -864,13 +780,13 @@ exports.completeAllUser = async (req, res) => {
 exports.updateauthUser=async(req,res)=>{ // function to update user
   try{
       const _id=req.params.id
-      console.log('body is',req.body)
-      console.log(_id)
+      // console.log('body is',req.body)
+      // console.log(_id)
       const updateUser=await authUser.findByIdAndUpdate(_id,req.body,{
           new:true
       })
       res.status(201).send({mssg:'update data successfully',updateData:updateUser})
-      console.log('update is',updateUser)
+      // console.log('update is',updateUser)
   }catch(e){
       res.status(404).send({mssg:'internal server error'})
   }
@@ -890,7 +806,7 @@ exports.allUser = async (req, res) => {
 
       const city = user.city.trim();
       const gender = user.gender;
-      const visitors = user.visitors.map(visitor => visitor.visitorId.toString()); // Assuming visitors is an array of ObjectIds
+     
       const likes = user.likes.map(like => like.toString());
       const onlineSkipUser=user.onlineSkipUser.map(onlineSkip=>onlineSkip.toString())
       const onlineLikeUser=user.onlineLikeUser.map(onlineLike=>onlineLike.toString())
@@ -908,7 +824,7 @@ exports.allUser = async (req, res) => {
       }
 
       // Remove users from filteredUsers if they are present in the visitors array
-      filteredUsers = filteredUsers.filter(u => !visitors.includes(u._id.toString()));
+    
       filteredUsers = filteredUsers.filter(u => !likes.includes(u._id.toString()));
       filteredUsers = filteredUsers.filter(u => !onlineSkipUser.includes(u._id.toString()));
       filteredUsers = filteredUsers.filter(u => !onlineLikeUser.includes(u._id.toString()));
@@ -927,11 +843,11 @@ exports.allUser = async (req, res) => {
 exports.getFilterUser = async (req, res) => {
   try {
       const userId = req.params.id; // Assuming the user ID is passed as a parameter in the URL
-      console.log('get filter data', userId); // login user id
+      // console.log('get filter data', userId); // login user id
 
       // Find the user with the specified ID
       const user = await authUser.findById(userId);
-      console.log('user is data', user);
+      // console.log('user is data', user);
 
       if (!user) {
           return res.status(404).json({ mssg: "User not found" });
@@ -943,8 +859,8 @@ exports.getFilterUser = async (req, res) => {
       const userGender = user.gender;
       const userCity = user.city; // Get city of the user
       const formattedCity = userCity.trim(); 
-      console.log('gender is', userGender);
-      console.log('city is', userCity);
+      // console.log('gender is', userGender);
+      // console.log('city is', userCity);
 
 
       let interestUsers;
@@ -974,59 +890,19 @@ exports.getFilterUser = async (req, res) => {
       }
 
       // Filter out users from interestUsers who are in hideRemainMatchUsers
-      // const hideRemainMatchUserIds = hideRemainMatchUsers.map(user => user._id.toString());
-      // interestUsers = interestUsers.filter(user => !hideRemainMatchUserIds.includes(user._id.toString()));
+     
 
       res.json({ interestUsers });
-      console.log('interest user is', interestUsers);
+      // console.log('interest user is', interestUsers);
   } catch (error) {
       res.status(500).json({ mssg: "Internal server error" });
   }
 };
-// exports.getFilterUser = async (req, res) => {
-//   try {
-//       const userId = req.params.id;
-//       const user = await authUser.findById(userId);
 
-//       // Check if the user exists
-//       if (!user) {
-//           return res.status(404).json({ message: "User not found" });
-//       }
-
-//       const city = user.city;
-//       const gender = user.gender;
-//       const filterUserArray = user.filterData.map(filter=>filter.toString());
-//       const matchFilterUserArray = user.likeFilterData.map(likeFilter=>likeFilter.toString()) 
-//       const anotherMatchFilterUserArray = user.likes.map(like=>like.toString())
-
-//       const users = await authUser.find();
-
-//       // Filter out users with the same city and opposite gender
-//       let interestUsers  = users.filter(u => u.city !== city);
-
-//       if (gender === 'Male') {
-//         interestUsers  = interestUsers .filter(u => u.gender === 'Female');
-//       } else {
-//         interestUsers  = interestUsers .filter(u => u.gender === 'Male');
-//       }
-
-//       // Remove users from filteredUsers if they are present in the visitors array
-//       interestUsers  = interestUsers .filter(u => !filterUserArray.includes(u._id.toString()));
-//       interestUsers  = interestUsers .filter(u => !matchFilterUserArray.includes(u._id.toString()));
-//       interestUsers  = interestUsers .filter(u => !anotherMatchFilterUserArray.includes(u._id.toString()));
-
-
-//       res.json({
-//         interestUsers 
-//       });
-//   } catch (error) {
-//       res.status(500).json({ message: "Internal server error" });
-//   }
-// }
 exports.addSkipUser = async (req, res) => { // if you want to unlike user that unlike user id store in a database with the help of these func
   try {
       const userId = req.params.id; // login person  userId
-      console.log('user id is', userId);
+      // console.log('user id is', userId);
 
       // Fetch the user object based on the provided userId
       const userObj = await authUser.findById(userId);
@@ -1035,7 +911,7 @@ exports.addSkipUser = async (req, res) => { // if you want to unlike user that u
       }
 
       const addUserId = req.body.userId; // unlike person user id
-      console.log('add id is', addUserId);
+      // console.log('add id is', addUserId);
 
       // Update the user object to add the new ID to the filterData array
       userObj.filterData.push(addUserId); // Assuming filterData is an array in your User model
@@ -1053,7 +929,7 @@ exports.addSkipUser = async (req, res) => { // if you want to unlike user that u
 exports.getSkipUser = async (req, res) => { // if you want to unlike user that unlike user id store in a database with the help of these func
     try {
         const userId = req.params.id; // login person  userId
-        console.log('user id is', userId);
+        // console.log('user id is', userId);
   
         // Fetch the user object based on the provided userId
         const userObj = await authUser.findById(userId);
@@ -1079,12 +955,12 @@ exports.addMatchUser = async (req, res) => {
   try {
       const matchLikeId = req.body.matchLikeId; // like user id
       const loginId = req.params.id; // login user id
-      console.log(matchLikeId, 'matchPlusLike', loginId);
+      // console.log(matchLikeId, 'matchPlusLike', loginId);
       const userObj = await authUser.findById(loginId);
       const anotherUserObj = await authUser.findById(matchLikeId);
 
-      console.log('user obj data is',userObj)
-      console.log('another user obj data is',anotherUserObj)
+      // console.log('user obj data is',userObj)
+      // console.log('another user obj data is',anotherUserObj)
 
       if (!userObj && !anotherUserObj) {
           return res.status(404).json({ mssg: "User not found" });
@@ -1099,7 +975,7 @@ exports.addMatchUser = async (req, res) => {
       const anotherMatchLikeUser = await anotherUserObj.save();
 
 
-      console.log('match person like', matchLikeUser);
+      // console.log('match person like', matchLikeUser);
 
       let likeFilterArray;
       likeFilterArray = await authUser.find({  
@@ -1129,79 +1005,32 @@ exports.getMatchUser=async(req,res)=>{ // function to get data of like user
     try{
         const userId = req.params.id; // login user id
         const user = await authUser.findById(userId);
-        console.log('get match user is',user)
+        // console.log('get match user is',user)
         const getLikeFilterUserArray=user.likeFilterData
         const getLikesArray=user.likes
-        console.log(' get like filter data',getLikeFilterUserArray)
-        // const anothergetMatchUserData=user.anotherMatchData
-        // const obj=await authUser.findById(user.matchNotify)
-
-        // const deactivateUserArray=user.deactivatedIdArray
-        // const blockUserArray=user.blockUserArray 
-        // const oppositeBlockUserArray=user.oppositeBlockUserArray
+        // console.log(' get like filter data',getLikeFilterUserArray)
+       
         
         let getLikeFilterArray;
         getLikeFilterArray = await authUser.find({  
             _id: { $in: getLikeFilterUserArray }, 
             
         });
-        // matchUser = matchUser.filter(matchItem => !blockUserArray.includes(matchItem._id.toString()));
-        // matchUser = matchUser.filter(matchItem => !oppositeBlockUserArray.includes(matchItem._id.toString()));
+      
         let getLikeArray;
         getLikeArray=await authUser.find({
             _id: { $in:getLikesArray }
         })
-        // anotherMatchUser = anotherMatchUser.filter(anotherMatchItem => !blockUserArray.includes(anotherMatchItem._id.toString()));
-        // anotherMatchUser = anotherMatchUser.filter(anotherMatchItem => !oppositeBlockUserArray.includes(anotherMatchItem._id.toString()));
-        // let anotherMatchUserData;
-        // anotherMatchUserData=await authUser.find({
-        //     _id: { $in:anothergetMatchUserData }
-        // })
-       
-
+        
+      
         res.json({  likeFilterArray:getLikeFilterArray, likesArray: getLikeArray});
-        // setTimeout(async () => {
-        //     user.matchNotify = null; // Clear the notification
-        //     await user.save(); // Save the changes
-        //   }, 5000);
+       
     }catch (error) {
         console.error(error);
         res.status(500).json({ mssg: "Internal server error" });
     }
 }
-exports.addLikeSmsTextUser = async (req, res) => {
-    try {
-        const smsUserId = req.body.matchLikeId; // like user id
-        const senderUserId = req.params.id; // login user id
-        console.log(smsUserId, 'sms id', senderUserId);
 
-        const userObj = await authUser.findById(smsUserId);
-        console.log('sms user obj is', userObj);
-
-        const likeUserObj = await authUser.findById(senderUserId);
-
-        if (!userObj.phone) {
-            throw new Error('User phone number is missing');
-        }
-
-        await client.messages.create({
-            body: `Congrats! ${likeUserObj.firstName} just liked you now on ApnaPan checkout your likes`, // Your message here
-            // from: '+12513103964', // d86901110@gmail.com twillo number
-            from: '+16187496515', // Your Twilio phone number
-            to: '+91'+userObj.phone.toString() // Phone number of likeUserObj
-        });
-
-        res.status(200).json({ mssg: "Message sent successfully" });
-
-    } catch (error) {
-        console.error('Error sending SMS:', error);
-        if (error.code === 21408) {
-            res.status(400).json({ mssg: "Permission to send an SMS has not been enabled for the region indicated by the 'To' number" });
-        } else {
-            res.status(500).json({ mssg: "Internal server error" });
-        }
-    }
-};
 
 exports.addLikeCountUser = async (req, res) => {
     try {
@@ -1213,7 +1042,7 @@ exports.addLikeCountUser = async (req, res) => {
         userObj.counter = userObj.counter ? userObj.counter + 1 : 1; // Incrementing the counter value
         await userObj.save(); // Saving the updated userObj
       //   io.emit('new counter', { userId: userId, counter: userObj.counter });
-        console.log('Updated userObj:', userObj);
+        // console.log('Updated userObj:', userObj);
         res.status(200).send({ message: 'Counter incremented successfully', userObj:userObj });
       } 
    
@@ -1231,7 +1060,7 @@ exports.addLikeCountUser = async (req, res) => {
     try{
         const userId = req.params.id; 
         const user = await authUser.findById(userId);
-        console.log('get count user is',user.counter)
+        // console.log('get count user is',user.counter)
         res.json({userObj:user });
      
     } catch (error) {
@@ -1244,7 +1073,7 @@ exports.deleteCounterUser = async (req, res) => {
     try {
         const userId = req.body.loginId;
         const user = await authUser.findById(userId);
-        console.log('user id in count',userId)
+        // console.log('user id in count',userId)
         
         if (user) {
             // Delete the counter property from the user object
@@ -1253,7 +1082,7 @@ exports.deleteCounterUser = async (req, res) => {
             // Save the updated user object
             await user.save();
            
-            console.log('Counter deleted for user:', user);
+            // console.log('Counter deleted for user:', user);
             const io = req.app.locals.io;
             io.emit('deleteLikeCount', user.counter);
          
@@ -1271,7 +1100,7 @@ exports.addCommonVisitorLikeSkipUser=async(req,res)=>{ // function to store logi
     try{
         const likeUserId=req.body.likeSkipUserId // like user id
         const loginId = req.params.id; // login user id
-        console.log(loginId, 'likeSkipUser',likeUserId)
+        // console.log(loginId, 'likeSkipUser',likeUserId)
         const userObj = await authUser.findById(loginId);
         if (!userObj) {
                  return res.status(404).json({ mssg: "User not found" });
@@ -1284,7 +1113,7 @@ exports.addCommonVisitorLikeSkipUser=async(req,res)=>{ // function to store logi
                  
              });
 
-             console.log('like skip',likeSkipUser)
+            //  console.log('like skip',likeSkipUser)
              res.json({likeSkip:skipUserArray})
 
     }catch (error) {
@@ -1297,15 +1126,15 @@ exports.getCommonVisitorLikeSkipUser=async(req,res)=>{ // function to get data o
     try{
         const userId = req.params.id; // login user id
         const user = await authUser.findById(userId);
-        console.log('get like skip user is',user)
+        // console.log('get like skip user is',user)
         const likeSkipUserArray=user.skipUser
-        console.log(' like skip user is',likeSkipUserArray)
+        // console.log(' like skip user is',likeSkipUserArray)
         let skipUser;
         skipUser = await authUser.find({  
             _id: { $in: likeSkipUserArray }, 
             
         });
-        console.log('skip user array is',skipUser)
+        // console.log('skip user array is',skipUser)
         res.json({ likeSkipUserArray:skipUser });
     }catch (error) {
         console.error(error);
@@ -1317,38 +1146,22 @@ exports.addLikeMatchUser = async (req, res) => {
     try {
         const likeMatchId = req.body.likeMatchId; // like user id 
         const loginId = req.params.id; // login user id
-        console.log(likeMatchId, 'matchPlusLike', loginId);
+        // console.log(likeMatchId, 'matchPlusLike', loginId);
         const userObj = await authUser.findById(loginId);
         const anotherUserObj = await authUser.findById(likeMatchId);
         // const matchUserObj = await authUser.findById(matchLikeId);
-        console.log('user obj data is',userObj)
-        console.log('another user obj data is',anotherUserObj)
-
-        // if (!userObj && !anotherUserObj) {
-        //     return res.status(404).json({ mssg: "User not found" });
-        // }
-
-        // if (anotherUserObj.visitors.includes(loginId)) {
-        //     anotherUserObj.counter = (anotherUserObj.counter || 0) + 1;
-        // }
-        // const index = anotherUserObj. likeUser.indexOf(loginId);
-        // if (index > -1) {
-        //     anotherUserObj. likeUser.splice(index, 1);
-        // }
-        // // Check if loginId is present in anotherUserObj.likes
-        // if (!anotherUserObj.likes.includes(loginId)) {
-        //     anotherUserObj.anotherMatchData.push(loginId);
-        // }
+        // console.log('user obj data is',userObj)
+        // console.log('another user obj data is',anotherUserObj)
 
         userObj.matchUser.push(likeMatchId);
         anotherUserObj.anotherMatchUser.push(loginId);
-        // matchUserObj.matchNotify = loginId;
+   
 
         const matchLikeUser = await userObj.save();
         const anotherMatchLikeUser = await anotherUserObj.save();
-        // const matchUser = await matchUserObj.save();
 
-        console.log('match person like', matchLikeUser);
+
+        // console.log('match person like', matchLikeUser);
         let matchLikeUserArray
         matchLikeUserArray = await authUser.find({  
             _id: { $in: matchLikeUser.matchUser }, 
@@ -1376,74 +1189,17 @@ exports.addLikeMatchUser = async (req, res) => {
     }
 };
 
-// exports.addLikeMatchUser = async (req, res) => {
-//     try {
-//         const likeMatchId = req.body.likeMatchId; // like user id 
-//         const loginId = req.params.id; // login user id
-//         console.log(likeMatchId, 'matchPlusLike', loginId);
 
-//         const userObj = await authUser.findById(loginId);
-//         const anotherUserObj = await authUser.findById(likeMatchId);
-
-//         if (!userObj || !anotherUserObj) {
-//             return res.status(404).json({ mssg: "User not found" });
-//         }
-
-//         // Remove loginId from visitors and likeUser arrays in the database
-//         await authUser.updateOne(
-//             { _id: likeMatchId },
-//             {
-//                 $pull: {
-//                     visitors: { visitorId: loginId }, // Remove loginId from visitors
-//                     likeUser: loginId, // Remove loginId from likeUser
-//                 },
-//             }
-//         );
-
-//         // Add loginId to anotherMatchUser array if not already present
-//         if (!anotherUserObj.anotherMatchUser.includes(loginId)) {
-//             anotherUserObj.anotherMatchUser.push(loginId);
-//             await anotherUserObj.save();
-//         }
-
-//         // Add likeMatchId to userObj.matchUser array if not already present
-//         if (!userObj.matchUser.includes(likeMatchId)) {
-//             userObj.matchUser.push(likeMatchId);
-//             await userObj.save();
-//         }
-
-//         // Fetch matchUser details for response
-//         let matchLikeUserArray = await authUser.find({
-//             _id: { $in: userObj.matchUser },
-//         });
-
-//         let anotherMatchLikeUserArray = await authUser.find({
-//             _id: { $in: anotherUserObj.anotherMatchUser },
-//         });
-
-//         res.json({
-//             matchLikes: matchLikeUserArray,
-//             anotherMatchLikes: anotherMatchLikeUserArray,
-//         });
-
-//     } catch (error) {
-//         console.error(error);
-//         res.status(500).json({ mssg: "Internal server error" });
-//     }
-// };
 
 exports.getLikeMatchUser=async(req,res)=>{ // function to get data of like user
     try{
         const userId = req.params.id; // login user id
         const user = await authUser.findById(userId);
-        console.log('get match user is',user)
+        // console.log('get match user is',user)
         const getMatchUserArray=user.matchUser
         const anothergetMatchUserArray=user.anotherMatchUser
-        console.log(' get match data is',getMatchUserArray)
-        // const anothergetMatchUserData=user.anotherMatchData
-        // const obj=await authUser.findById(user.matchNotify)
-
-        // const deactivateUserArray=user.deactivatedIdArray
+        // console.log(' get match data is',getMatchUserArray)
+  
         const blockUserArray=user.blockUserArray 
         const oppositeBlockUserArray=user.oppositeBlockUserArray
         
@@ -1460,17 +1216,10 @@ exports.getLikeMatchUser=async(req,res)=>{ // function to get data of like user
         })
         anotherMatchUser = anotherMatchUser.filter(anotherMatchItem => !blockUserArray.includes(anotherMatchItem._id.toString()));
         anotherMatchUser = anotherMatchUser.filter(anotherMatchItem => !oppositeBlockUserArray.includes(anotherMatchItem._id.toString()));
-        // let anotherMatchUserData;
-        // anotherMatchUserData=await authUser.find({
-        //     _id: { $in:anothergetMatchUserData }
-        // })
-       
+      
 
         res.json({matchLikes: matchUser,anotherMatchLikes:anotherMatchUser  });
-        // setTimeout(async () => {
-        //     user.matchNotify = null; // Clear the notification
-        //     await user.save(); // Save the changes
-        //   }, 5000);
+
     }catch (error) {
         console.error(error);
         res.status(500).json({ mssg: "Internal server error" });
@@ -1483,7 +1232,7 @@ exports.addOnlineSkipUser = async (req, res) => {
       const onlinePersonUserId = req.body.onlinePersonSkipUserId; // Like user id
       const loginUserId = req.params.id; // Login user id
 
-      console.log(loginUserId, 'onlinePlusSkip', onlinePersonUserId);
+      // console.log(loginUserId, 'onlinePlusSkip', onlinePersonUserId);
 
       const userObj = await authUser.findById(loginUserId);
       if (!userObj) {
@@ -1495,17 +1244,12 @@ exports.addOnlineSkipUser = async (req, res) => {
           return res.status(404).json({ mssg: "Target user not found" });
       }
 
-      // Remove loginUserId from anotherUserObj.visitors array in MongoDB permanently
-      await authUser.updateOne(
-          { _id: onlinePersonUserId }, 
-          { $pull: { visitors: { visitorId: loginUserId } } }
-      );
-
+   
       // Add onlinePersonUserId to loginUser's onlineSkipUser array
       userObj.onlineSkipUser.push(onlinePersonUserId);
       const onlinePersonSkipUser = await userObj.save();
 
-      console.log('online person skip', onlinePersonSkipUser);
+      // console.log('online person skip', onlinePersonSkipUser);
       res.json({ onlineSkip: onlinePersonSkipUser,skipUserId:onlinePersonUserId});
 
   } catch (error) {
@@ -1517,7 +1261,7 @@ exports.addOnlineSkipUser = async (req, res) => {
 exports.getOnlineSkipUser = async (req, res) => { // if you want to unlike user that unlike user id store in a database with the help of these func
     try {
         const userId = req.params.id; // login person  userId
-        console.log('user id is', userId);
+        // console.log('user id is', userId);
   
         // Fetch the user object based on the provided userId
         const userObj = await authUser.findById(userId);
@@ -1542,22 +1286,19 @@ exports.addOnlineLikeUser=async(req,res)=>{ // function to store login user id i
     try{
         const onlinePersonLikeUserId=req.body.onlinePersonLikeUserId // like user id
         const loginUserId = req.params.id; // login user id
-        console.log(loginUserId, 'onlinePlusSkip',onlinePersonLikeUserId)
+        // console.log(loginUserId, 'onlinePlusSkip',onlinePersonLikeUserId)
         const userObj = await authUser.findById(loginUserId);
         const anotherUserObj = await authUser.findById(onlinePersonLikeUserId)
-        await authUser.updateOne(
-          { _id: onlinePersonLikeUserId }, 
-          { $pull: { visitors: { visitorId: loginUserId } } }
-      );
+       
         if (!userObj) {
                  return res.status(404).json({ mssg: "User not found" });
              }
              userObj.selfOnlineLikeUser.push(onlinePersonLikeUserId)
              anotherUserObj.onlineLikeUser.push(loginUserId)
-            //  anotherUserObj.visitors = anotherUserObj.visitors.filter(anotherVisitor => anotherVisitor.visitorId !== loginUserId);
+           
              const onlinePersonLikeUser=await userObj.save()
              const anotherOnlinePersonLikeUser=await anotherUserObj.save()
-             console.log('online person skip',onlinePersonLikeUser)
+            //  console.log('online person skip',onlinePersonLikeUser)
 
              let onlineLikeUserArray
              onlineLikeUserArray=await authUser.find({
@@ -1584,36 +1325,21 @@ exports.getOnlineLikeUser = async (req, res) => {
         if (!user) {
             return res.status(404).json({ mssg: "User not found" });
         }
-        // const blockUserArray=user.blockUserArray
-        // const oppositeBlockUserArray=user.oppositeBlockUserArray
+        
 
         let onlineLikeUserArray
          onlineLikeUserArray = user.onlineLikeUser;
-        //  onlineLikeUserArray=onlineLikeUserArray.filter(onlineLikeItem=>!blockUserArray.includes(onlineLikeItem._id.toString()))
-        //  onlineLikeUserArray=onlineLikeUserArray.filter(onlineLikeItem=>!oppositeBlockUserArray.includes(onlineLikeItem._id.toString()))
+       
 
         const onlineLikeUserData = await authUser.find({ _id: { $in: onlineLikeUserArray } });
         
         let selfOnlineLikeUserArray
         selfOnlineLikeUserArray = user.selfOnlineLikeUser;
-        // selfOnlineLikeUserArray = selfOnlineLikeUserArray .filter(selfOnlineLikeItem=>!blockUserArray.includes(selfOnlineLikeItem._id.toString()))
-        // selfOnlineLikeUserArray = selfOnlineLikeUserArray .filter(selfOnlineLikeItem=>!oppositeBlockUserArray.includes(selfOnlineLikeItem._id.toString()))
+       
 
         const selfOnlineLikeUserData = await authUser.find({ _id: { $in: selfOnlineLikeUserArray } });
 
-        // Remove visitors that are also in selfOnlineLikeUserArray
-        // user.visitors = user.visitors.filter(visitor => 
-        //     !onlineLikeUserArray.includes(visitor.visitorId)
-        // );
-       
-        // const deactivateUserArray = user.deactivatedIdArray;
-        // const filteredOnlineLikeUserData = onlineLikeUserData.filter(user => {
-        //     return !deactivateUserArray.includes(user._id.toString());
-        // });
-        
-        // console.log('visitors of like User', user.visitors);
-
-        // Save the updated user object
+    
         await user.save();
 
         res.json({ onlineLikeUser: onlineLikeUserData, selfOnlineLikeUser: selfOnlineLikeUserData });
@@ -1624,97 +1350,20 @@ exports.getOnlineLikeUser = async (req, res) => {
 };
 
 
-
-
-// const formatTimeDifference = (date) => {
-//     const now = new Date();
-//     const diffMs = now - date;
-//     const diffSec = Math.floor(diffMs / 1000);
-//     const diffMin = Math.floor(diffSec / 60);
-//     const diffHrs = Math.floor(diffMin / 60);
-//     const diffDays = Math.floor(diffHrs / 24);
-
-//     if (diffMin < 60) return `${diffMin} minutes ago`;
-//     if (diffHrs < 24) return `${diffHrs} hours ago`;
-//     if (diffHrs === 1) return `yesterday`;
-    
-//     if (diffHrs > 28) {
-//         // Format the date as 'Month Day, Year'
-//         const options = { day: 'numeric', month: 'long', year: 'numeric' };
-//         return date.toLocaleDateString('en-US', options);
-//     }
-
-//     return `${diffDays} days ago`;
-// };
-// Example usage
-// const visitDate = new Date('2024-06-08T10:00:00Z');
-// console.log('format date', formatTimeDifference(visitDate));
-const formatTimeDifference = (date) => {
-    const now = new Date();
-    const diffMs = now - date;
-    const diffMin = Math.floor(diffMs / 1000 / 60);
-    const diffHrs = Math.floor(diffMin / 60);
-    const diffDays = Math.floor(diffHrs / 24);
-
-    if (diffMin < 60) return `${diffMin} minutes ago`;
-    if (diffHrs < 24) return `${diffHrs} hours ago`;
-    if (diffDays === 1) return "yesterday";
-    
-    const options = { day: '2-digit', month: 'short', year: 'numeric' };
-    return new Intl.DateTimeFormat('en-GB', options).format(date);
-}
-
-
-
-
-
-exports.deleteVisitorNotifyUser = async (req, res) => {
-    try {
-      const loginId = req.params.id;
-      const visitorId=req.body.visitorOnlineId
-      const result = await authUser.findOneAndUpdate( // multiple field se kuch delete karna ho to findOneAndUpdate
-        { _id: loginId }, // Find the document by loginId
-        { 
-          $pull: { 
-            visitorNotify: { loginId: visitorId } // Remove object from messageNotify array
-          } 
-        },
-        { new: true } // Return the updated document
-      );
-    // const result = await authUser.findByIdAndUpdate(
-    //     loginId, // Find the document by loginId
-    //     { $pull: {  visitorNotify: visitorId } }, // Remove recieverId from recordMessageId array
-    //     { new: true } // Return the updated document
-    //   );
-    const userObjWithId = { ...result.toObject(), id: loginId };
-      res.status(200).json({ mssg: " delete visitor notify" ,userObj:userObjWithId});
-    } catch (error) {
-      console.error('Error:', error);
-      res.status(500).send({ message: 'Internal server error' });
-    }
-  };
-
-
-
-
 exports.deleteSkipProfileUser = async (req, res) => {
-    console.log('Response of skip profile:', req.body);
+    // console.log('Response of skip profile:', req.body);
     try {
         const id = req.params.id;
         const deleteUserId = req.query.deleteUserId;
-        console.log('Delete user ID:', deleteUserId);
+        // console.log('Delete user ID:', deleteUserId);
 
         const user = await authUser.findById(id);
         if (!user) {
             return res.status(404).json({ mssg: "User not found" });
         }
 
-        console.log('User before deletion:', user);
+        // console.log('User before deletion:', user);
 
-        // await authUser.updateOne( // keval single data delete karne ke liye
-        //     { _id: id },
-        //     { $pull: { onlineSkipUser: deleteUserId } }
-        // );
         await authUser.updateOne(
             { _id: id },
             {
@@ -1724,7 +1373,7 @@ exports.deleteSkipProfileUser = async (req, res) => {
               }
             }
         );
-        console.log('User after deletion:', await authUser.findById(id));
+        // console.log('User after deletion:', await authUser.findById(id));
 
         res.status(200).json({ mssg: "User updated successfully" ,deleteId:deleteUserId});
     } catch (error) {
@@ -1779,36 +1428,7 @@ exports.getBlockChatIdUser=async(req,res)=>{
         res.status(500).send({mssg:'internal server error'})    
     }
 }
-// exports.deleteBlockUser = async (req, res) => {
-//     try {
-//         const id = req.params.id; // Logged-in user ID
-//         const blockId = req.query.blockId; // ID of the user to unblock
 
-//         // Find the logged-in user and the blocked user
-//         const loginObj = await authUser.findById(id);
-//         const blockObj = await authUser.findById(blockId);
-
-//         if (!loginObj || !blockObj) {
-//             return res.status(404).send({ mssg: 'User not found' });
-//         }
-
-//         // Remove blockId from blockUserArray of the logged-in user
-//         await authUser.findByIdAndUpdate(id, {
-//             $pull: { blockUserArray: blockId }
-//         });
-
-//         // Remove id from oppositeBlockUserArray of the blocked user
-//         await authUser.findByIdAndUpdate(blockId, {
-//             $pull: { oppositeBlockUserArray: id }
-//         }); 
-
-//         res.send({ mssg: 'User unblocked successfully' });
-//     } catch (e) {
-//         console.error(e);
-//         res.status(500).send({ mssg: 'Internal server error' });
-//     }
-
-// };
 exports.deleteBlockUser = async (req, res) => {
     try {
         const id = req.params.id; // Logged-in user ID
@@ -1856,34 +1476,7 @@ exports.deleteBlockUser = async (req, res) => {
     }
 };
 
-exports.addUpdatePasswordUser = async (req, res) => {
-    try {
-      const id = req.params.id;
-      const currentPassword = req.body.currentPassword;
-      const updatePassword = req.body.confirmNewPassword;
-      console.log('update password is', currentPassword);
-  
-      const user = await authUser.findById(id);
-      if (!user) {
-        return res.status(404).json({ msg: "User not found" });
-      }
-  
-      const isMatch = await bcrypt.compare(currentPassword, user.password);
-      if (!isMatch) {
-        return res.status(400).json({ msg: "Current password is incorrect" });
-      }
-  
-      // Update user's password and save
-      user.password = updatePassword; // Assign the new password
-      await user.save(); // This will trigger the pre-save hook in authSchema.js
-      console.log('New password set:', user.password);
-  
-      res.status(200).json({ msg: "Password updated successfully" });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ msg: "Internal server error" });
-    }
-  };
+
   exports.deleteProfileUser = async (req, res) => {
     try {
       const id = req.params.id;
@@ -1910,16 +1503,9 @@ exports.addUpdatePasswordUser = async (req, res) => {
         return res.status(404).json({ msg: "User not found" });
       }
   
-      // Remove the visitor object from the visitors array of all users where visitorId matches the deleted user's ID
-    //   await authUser.updateMany( // ye keval data delete karne ke liye
-    //     { 'visitors.visitorId': id },
-    //     { $pull: { visitors: { visitorId: id } } }
-    //   );
-    // await loginIdUser.deleteMany({ loginEmail: deletedUser.email });
     await authUser.updateMany(
         {
           $or: [
-            { 'visitors.visitorId': id },
             { 'filterData': id },
             { 'likes': id },
             { 'likeFilterData': id },
@@ -1941,7 +1527,6 @@ exports.addUpdatePasswordUser = async (req, res) => {
         },
         {
           $pull: {
-            visitors: { visitorId: id },
             filterData:id,
             likes:id,
             likeFilterData:id,
@@ -2058,7 +1643,7 @@ exports.getSelectedSong=async(req,res)=>{ // function to update user
   try{
       const id=req.params.id
      const getSongLoginData=await authUser.findById(id)
-     console.log('get selected song',getSongLoginData)
+    //  console.log('get selected song',getSongLoginData)
   res.json({loginUser:getSongLoginData})
   }catch(e){
       res.status(404).send({mssg:'internal server error'})
@@ -2071,7 +1656,7 @@ exports.uploadSongs = async (req, res) => {
 
       if (req.files.songUrl && req.files.songUrl.length > 0) { 
           const audioFile = req.files.songUrl[0]; 
-          console.log('Audio file:', audioFile);
+          // console.log('Audio file:', audioFile);
 
           const audioResult = await  cloudinary.uploader.upload(audioFile.path, {
               resource_type: 'raw', // Use 'raw' for audio files
@@ -2085,7 +1670,7 @@ exports.uploadSongs = async (req, res) => {
 
           songUrl = audioResult.secure_url;
       } else {
-          console.log('No audio file provided');
+          // console.log('No audio file provided');
           throw new Error('No audio file provided');
       }
       
@@ -2121,7 +1706,7 @@ exports.getUploadSong=async(req,res)=>{ // function to update user
   try{
       const id=req.params.id
      const getUploadData=await uploadSongs.find()
-     console.log('get upload',getUploadData)
+    //  console.log('get upload',getUploadData)
   res.json({uploadSongsData:getUploadData})
   }catch(e){
       res.status(404).send({mssg:'internal server error'})
@@ -2161,7 +1746,7 @@ exports.addDarkMode=async(req,res)=>{ // function to update user
 exports.allRegisterUser = async (req, res) => {
   try {
       const userId = req.params.id;
-      console.log('user id is',userId)
+      // console.log('user id is',userId)
       const allUsers = await authUser.find();
       res.json({
           users: allUsers
@@ -2232,14 +1817,12 @@ exports.allFieldRegisterUser = async (req, res) => {
           _id: { $in: registerObj.typing}, 
           
       });
-      const visitorUserArray = registerObj.visitors.map(visitor => visitor.visitorId);
-      const getVisitors = await authUser.find({ _id: { $in: visitorUserArray } });
+    
       // Send success response
       res.status(201).send({
           mssg: 'array data ',
           response: 201,
          likes:likeUserArray,
-         visitorUserArray:getVisitors,
          onlineLikeUser:onlineLikeUserArray,
          anotherMatchUser:anotherMatchUserArray,
          skipUser:skipUserArray,
@@ -2289,8 +1872,8 @@ exports.deleteProfileFromAdminArray = async (req, res) => {
       });
     }
 
-    console.log("user obj in delete:", userObj);
-    console.log("delete user id in array:", deletedUserId);
+    // console.log("user obj in delete:", userObj);
+    // console.log("delete user id in array:", deletedUserId);
 
     await authUser.updateOne(
       { _id: adminId },
@@ -2298,11 +1881,6 @@ exports.deleteProfileFromAdminArray = async (req, res) => {
         $pull: {
           skipUser: deleteId,
           matchUser: deleteId,
-
-          visitors: {
-            visitorId: deleteId,
-          },
-
           likes: deleteId,
           onlineLikeUser: deleteId,
           anotherMatchUser: deleteId,
@@ -2377,7 +1955,7 @@ exports.getNotifyUser=async(req,res)=>{ // function to update user
   try{
       const id=req.params.id
      const getUploadData=await notifyIdUser.find()
-     console.log('get upload user',getUploadData)
+    //  console.log('get upload user',getUploadData)
   res.json({mssg:'notify user',notifyUser:getUploadData})
   }catch(e){
       res.status(404).send({mssg:'internal server error'})
@@ -2419,10 +1997,10 @@ exports.deleteMultipleNotifyUsers = async (req,res)=>{
 try{
 
     const loginId = req.params.id;
-    console.log('login id delete',loginId)
+    // console.log('login id delete',loginId)
 
     const {tokens} = req.body;
-    console.log('token data',tokens)
+    // console.log('token data',tokens)
 
     if(!Array.isArray(tokens) || tokens.length===0){
 
@@ -2500,7 +2078,7 @@ res.status(500).json({
 }
 };
 exports.addChatTheme = async (req, res) => {
-  console.log("req theme", req.body);
+  // console.log("req theme", req.body);
 
   try {
     const loginId = req.params.id;
@@ -2597,7 +2175,7 @@ exports.addChatTheme = async (req, res) => {
 };
 
 exports.getChatTheme=async(req,res)=>{ // function to update user
-  console.log("params:", req.params);
+  // console.log("params:", req.params);
 
   try{
       const loginId=req.params.id
@@ -3153,7 +2731,7 @@ exports.sendReport = async (req, res) => {
         folder: "reports",
       });
       
-      console.log('result data',result)
+      // console.log('result data',result)
 
       if (!result || !result.secure_url) {
         throw new Error("Cloudinary image upload failed");
@@ -3702,7 +3280,7 @@ exports.sendReport = async (req, res) => {
 exports.deleteAdminProfileUser = async (req, res) => {
   try {
     const id = req.params.id;
-    console.log('coming id',id)
+    // console.log('coming id',id)
     const userObj=await authUser.findById(id)
     if (!userObj) {
       return res.status(404).json({ msg: "User not found" });
@@ -3726,15 +3304,11 @@ exports.deleteAdminProfileUser = async (req, res) => {
       return res.status(404).json({ msg: "User not found" });
     }
 
-    // Remove the visitor object from the visitors array of all users where visitorId matches the deleted user's ID
-  //   await authUser.updateMany( // ye keval data delete karne ke liye
-  //     { 'visitors.visitorId': id },
-  //     { $pull: { visitors: { visitorId: id } } }
-  //   );
+  
   await authUser.updateMany(
       {
         $or: [
-          { 'visitors.visitorId': id },
+  
           { 'filterData': id },
           { 'likes': id },
           { 'likeFilterData': id },
@@ -3756,7 +3330,6 @@ exports.deleteAdminProfileUser = async (req, res) => {
       },
       {
         $pull: {
-          visitors: { visitorId: id },
           filterData:id,
           likes:id,
           likeFilterData:id,
@@ -4080,7 +3653,7 @@ exports.getReportUser = async (req, res) => {
   try{
 const id=req.params.id
 const allReportUser=await reportUser.find()
-console.log('id in report',id)
+// console.log('id in report',id)
 return res.status(200).send({
   mssg: "fetch report user successfully",
   reportUser:allReportUser,
@@ -4097,7 +3670,7 @@ exports.deleteReportUser = async (req, res) => {
   try {
     const id = req.params.id;
 
-    console.log("report id", id);
+    // console.log("report id", id);
 
     const userObj = await reportUser.findById(id);
 

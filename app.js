@@ -1,6 +1,5 @@
 
 const express = require('express');
-const ngrok = require('ngrok')
 const http = require('http');
 const db = require('./src/db/db');
 const userRoutes = require('./src/routes/authRoutes');
@@ -35,11 +34,7 @@ app.get('/ping', (req, res) => {
 const port = process.env.PORT || 4000;
 server.listen(port, '0.0.0.0', () => {
     console.log(`Server is running at http://192.168.29.169:${port}`);
-    ngrok.connect(port).then(ngrokUrl=>{
-        console.log(`ngrok connection is ${ngrokUrl}`)
-    }).catch(error=>{
-        console.log(`ngrok connection not there ${error}`)
-    })
+  
 });
 const io = require('socket.io')(server, {
     cors: {

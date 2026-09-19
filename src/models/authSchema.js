@@ -126,9 +126,6 @@ images: [{
   likeCounter:{
     type:Number
     },
-    visitorCounter:{
-      type:Number
-    },
   notify:{
     type:String
   },
@@ -151,19 +148,8 @@ images: [{
     ref:'UserData'
   }
 ],
-  // visitors:[ // schema for visitor user id
-  //   {
-  //     type:Schema.Types.ObjectId,
-  //     ref:'UserData',
  
-  //   }
-  // ],
-  visitors: [
-    {
-        visitorId: { type: mongoose.Schema.Types.ObjectId, ref: 'authUser' },
-        visitedAt: { type: Date, default: Date.now }
-    }
-],
+ 
   likes:[ // schema for like user id
     {
       type:Schema.Types.ObjectId,
@@ -176,13 +162,13 @@ images: [{
       ref:'UserData'
     }
   ],
-  likeUser:[ // schema for likeUser when comes in like or visitor section in a id format
+  likeUser:[ // schema for likeUser when comes in like  section in a id format
   {
     type:Schema.Types.ObjectId,
     ref:'UserData'
   },
 ],
-skipUser:[ // schema for skipUser when comes in like or visitor section in a id format
+skipUser:[ // schema for skipUser when comes in like section in a id format
 {
   type:Schema.Types.ObjectId,
   ref:'UserData'
@@ -365,30 +351,7 @@ messageNotify: [
     }
   }
 ],
-visitorNotify: [
-  {
-    loginId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'UserData',
-    },
-    visitorId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'UserData',
-    },
-    visitorName: {
-      type: String,
-      ref: 'UserData',
-    },
-   images:{
-    type:String
-   },
 
-    timestamp: {
-      type: Date,
-      required: true,
-    }
-  }
-],
 recordChat: [
   {
     loginId: {
