@@ -479,7 +479,7 @@ exports.sendOtp = async (req, res) => {
 
     if (!loginObj) {
       return res.status(404).json({
-        mssg: "User not found",
+        mssg: "No account found with this phone number.",
       });
     }
 
