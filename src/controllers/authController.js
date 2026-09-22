@@ -437,43 +437,10 @@ exports.login = async (req, res) => {
   }
 };
 
-// exports.sendOtp = async (req, res) => {
-//   try {
-//     const phone = req.body.phone;
-//     // console.log("otp phone", phone);
-
-//     const loginObj = await authUser.findOne({ phone });
-
-//     if (!loginObj) {
-//       return res.status(404).json({
-//         mssg: "No account found with this phone number.",
-//       });
-//     }
-
-//     // Generate random 6-digit OTP
-//     const otp = Math.floor(10000 + Math.random() * 90000);
-
-//     console.log("Generated OTP:", otp);
-
-//     res.status(200).json({
-//       mssg: "Send OTP successfully",
-//       email: loginObj.email,
-//       phone: loginObj.phone,
-//       otp: otp,
-//     });
-//   } catch (e) {
-//     console.log(e);
-//     res.status(500).json({
-//       mssg: "Internal server error",
-//     });
-//   }
-// };
-
-//mail sendOtp
 exports.sendOtp = async (req, res) => {
   try {
     const phone = req.body.phone;
-    console.log("otp phone", phone);
+    // console.log("otp phone", phone);
 
     const loginObj = await authUser.findOne({ phone });
 
@@ -483,183 +450,10 @@ exports.sendOtp = async (req, res) => {
       });
     }
 
-    // Generate random 5-digit OTP
+    // Generate random 6-digit OTP
     const otp = Math.floor(10000 + Math.random() * 90000);
 
     console.log("Generated OTP:", otp);
-
-    const mailOptions = {
-      from: {
-        name: "ApnaPan",
-        address: process.env.SENDER,
-      },
-
-      to: loginObj.email,
-
-      subject: `${otp} is your ApnaPan verification code`,
-
-      html: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8" />
-          <meta
-            name="viewport"
-            content="width=device-width, initial-scale=1.0"
-          />
-          <title>ApnaPan Verification Code</title>
-        </head>
-
-        <body style="
-          margin:0;
-          padding:30px 15px;
-          background:#f5f7fb;
-          font-family:Arial, Helvetica, sans-serif;
-          color:#1f2937;
-        ">
-
-          <table
-            width="100%"
-            cellpadding="0"
-            cellspacing="0"
-            border="0"
-          >
-            <tr>
-              <td align="center">
-
-                <!-- Main Container -->
-                <table
-                  width="100%"
-                  cellpadding="0"
-                  cellspacing="0"
-                  border="0"
-                  style="
-                    max-width:500px;
-                    background:#ffffff;
-                    border-radius:12px;
-                    overflow:hidden;
-                    border:1px solid #e2e8f0;
-                  "
-                >
-
-                  <!-- Header -->
-                  <tr>
-                    <td style="
-                      background:#0f172a;
-                      padding:20px;
-                      text-align:center;
-                    ">
-                      <div style="
-                        font-size:22px;
-                        font-weight:700;
-                        color:#ffffff;
-                      ">
-                        ApnaPan
-                      </div>
-
-                      <div style="
-                        margin-top:4px;
-                        font-size:11px;
-                        color:#cbd5e1;
-                      ">
-                        Dating &amp; Connections
-                      </div>
-                    </td>
-                  </tr>
-
-                  <!-- Content -->
-                  <tr>
-                    <td style="
-                      padding:30px 25px;
-                      text-align:center;
-                    ">
-
-                      <div style="
-                        font-size:18px;
-                        font-weight:700;
-                        color:#0f172a;
-                      ">
-                        Verify your account
-                      </div>
-
-                      <div style="
-                        margin-top:9px;
-                        font-size:13px;
-                        line-height:20px;
-                        color:#64748b;
-                      ">
-                        Use the verification code below to continue.
-                      </div>
-
-                      <!-- OTP -->
-                      <div style="
-                        margin:22px auto 0;
-                        padding:14px 22px;
-                        width:fit-content;
-                        background:#f8fafc;
-                        border:1px solid #e2e8f0;
-                        border-radius:9px;
-                      ">
-                        <div style="
-                          font-size:24px;
-                          font-weight:700;
-                          letter-spacing:5px;
-                          color:#0f172a;
-                        ">
-                          ${otp}
-                        </div>
-                      </div>
-
-                      <div style="
-                        margin-top:12px;
-                        font-size:11px;
-                        color:#94a3b8;
-                      ">
-                        This code is valid for 10 minutes.
-                      </div>
-
-                      <div style="
-                        margin-top:22px;
-                        font-size:11px;
-                        line-height:18px;
-                        color:#94a3b8;
-                      ">
-                        If you didn't request this code, you can safely
-                        ignore this email.
-                      </div>
-
-                    </td>
-                  </tr>
-
-                  <!-- Footer -->
-                  <tr>
-                    <td style="
-                      padding:14px;
-                      text-align:center;
-                      background:#f8fafc;
-                      border-top:1px solid #e2e8f0;
-                      font-size:10px;
-                      color:#94a3b8;
-                    ">
-                      © ApnaPan · Dating &amp; Connections
-                    </td>
-                  </tr>
-
-                </table>
-
-              </td>
-            </tr>
-          </table>
-
-        </body>
-        </html>
-      `,
-    };
-
-    // Send email through Brevo SMTP
-    const info = await transporter.sendMail(mailOptions);
-
-    console.log("Brevo SMTP Email Sent:", info.messageId);
 
     res.status(200).json({
       mssg: "Send OTP successfully",
@@ -667,15 +461,221 @@ exports.sendOtp = async (req, res) => {
       phone: loginObj.phone,
       otp: otp,
     });
-
   } catch (e) {
     console.log(e);
-
     res.status(500).json({
       mssg: "Internal server error",
     });
   }
 };
+
+//mail sendOtp
+// exports.sendOtp = async (req, res) => {
+//   try {
+//     const phone = req.body.phone;
+//     console.log("otp phone", phone);
+
+//     const loginObj = await authUser.findOne({ phone });
+
+//     if (!loginObj) {
+//       return res.status(404).json({
+//         mssg: "No account found with this phone number.",
+//       });
+//     }
+
+//     // Generate random 5-digit OTP
+//     const otp = Math.floor(10000 + Math.random() * 90000);
+
+//     console.log("Generated OTP:", otp);
+
+//     const mailOptions = {
+//       from: {
+//         name: "ApnaPan",
+//         address: process.env.SENDER,
+//       },
+
+//       to: loginObj.email,
+
+//       subject: `${otp} is your ApnaPan verification code`,
+
+//       html: `
+//         <!DOCTYPE html>
+//         <html>
+//         <head>
+//           <meta charset="UTF-8" />
+//           <meta
+//             name="viewport"
+//             content="width=device-width, initial-scale=1.0"
+//           />
+//           <title>ApnaPan Verification Code</title>
+//         </head>
+
+//         <body style="
+//           margin:0;
+//           padding:30px 15px;
+//           background:#f5f7fb;
+//           font-family:Arial, Helvetica, sans-serif;
+//           color:#1f2937;
+//         ">
+
+//           <table
+//             width="100%"
+//             cellpadding="0"
+//             cellspacing="0"
+//             border="0"
+//           >
+//             <tr>
+//               <td align="center">
+
+//                 <!-- Main Container -->
+//                 <table
+//                   width="100%"
+//                   cellpadding="0"
+//                   cellspacing="0"
+//                   border="0"
+//                   style="
+//                     max-width:500px;
+//                     background:#ffffff;
+//                     border-radius:12px;
+//                     overflow:hidden;
+//                     border:1px solid #e2e8f0;
+//                   "
+//                 >
+
+//                   <!-- Header -->
+//                   <tr>
+//                     <td style="
+//                       background:#0f172a;
+//                       padding:20px;
+//                       text-align:center;
+//                     ">
+//                       <div style="
+//                         font-size:22px;
+//                         font-weight:700;
+//                         color:#ffffff;
+//                       ">
+//                         ApnaPan
+//                       </div>
+
+//                       <div style="
+//                         margin-top:4px;
+//                         font-size:11px;
+//                         color:#cbd5e1;
+//                       ">
+//                         Dating &amp; Connections
+//                       </div>
+//                     </td>
+//                   </tr>
+
+//                   <!-- Content -->
+//                   <tr>
+//                     <td style="
+//                       padding:30px 25px;
+//                       text-align:center;
+//                     ">
+
+//                       <div style="
+//                         font-size:18px;
+//                         font-weight:700;
+//                         color:#0f172a;
+//                       ">
+//                         Verify your account
+//                       </div>
+
+//                       <div style="
+//                         margin-top:9px;
+//                         font-size:13px;
+//                         line-height:20px;
+//                         color:#64748b;
+//                       ">
+//                         Use the verification code below to continue.
+//                       </div>
+
+//                       <!-- OTP -->
+//                       <div style="
+//                         margin:22px auto 0;
+//                         padding:14px 22px;
+//                         width:fit-content;
+//                         background:#f8fafc;
+//                         border:1px solid #e2e8f0;
+//                         border-radius:9px;
+//                       ">
+//                         <div style="
+//                           font-size:24px;
+//                           font-weight:700;
+//                           letter-spacing:5px;
+//                           color:#0f172a;
+//                         ">
+//                           ${otp}
+//                         </div>
+//                       </div>
+
+//                       <div style="
+//                         margin-top:12px;
+//                         font-size:11px;
+//                         color:#94a3b8;
+//                       ">
+//                         This code is valid for 10 minutes.
+//                       </div>
+
+//                       <div style="
+//                         margin-top:22px;
+//                         font-size:11px;
+//                         line-height:18px;
+//                         color:#94a3b8;
+//                       ">
+//                         If you didn't request this code, you can safely
+//                         ignore this email.
+//                       </div>
+
+//                     </td>
+//                   </tr>
+
+//                   <!-- Footer -->
+//                   <tr>
+//                     <td style="
+//                       padding:14px;
+//                       text-align:center;
+//                       background:#f8fafc;
+//                       border-top:1px solid #e2e8f0;
+//                       font-size:10px;
+//                       color:#94a3b8;
+//                     ">
+//                       © ApnaPan · Dating &amp; Connections
+//                     </td>
+//                   </tr>
+
+//                 </table>
+
+//               </td>
+//             </tr>
+//           </table>
+
+//         </body>
+//         </html>
+//       `,
+//     };
+
+//     // Send email through Brevo SMTP
+//     const info = await transporter.sendMail(mailOptions);
+
+//     console.log("Brevo SMTP Email Sent:", info.messageId);
+
+//     res.status(200).json({
+//       mssg: "Send OTP successfully",
+//       email: loginObj.email,
+//       phone: loginObj.phone,
+//       otp: otp,
+//     });
+
+//   } catch (e) {
+//     console.log(e);
+
+//     res.status(500).json({
+//       mssg: "Internal server error",
+//     });
+//   }
+// };
 
 exports.verifyOtp = async (req, res) => {
   try {
@@ -3800,3 +3800,98 @@ exports.getCredUpload = async (req, res) => {
     });
   }
 }
+
+
+exports.onAppOpen = async (req, res) => {
+  try {
+    const loginId = req.params.id;
+    console.log('app open',loginId)
+    const loginObj = await authUser.findById(loginId);
+
+    if (!loginObj) {
+      return res.status(404).json({ msg: "user not found" });
+    }
+
+    const now = new Date();
+
+    // 🔹 CASE 1: Trial already exists
+    if (loginObj.freeSubscription?.endDate) {
+      const endDate = new Date(loginObj.freeSubscription.endDate);
+
+      // 🔴 EXPIRED (real-time check)
+      if (now >= endDate) {
+        if (loginObj.freeSubscription.status !== "ended") {
+          loginObj.freeSubscription.status = "ended";
+          loginObj.freeSubscription.plan = "expired";
+          await loginObj.save();
+        }
+
+        return res.json({
+          msg: "Free trial ended",
+          freeSubscription: loginObj.freeSubscription
+        });
+      }
+
+      // 🟢 ACTIVE
+      if (hotelObj.freeSubscription.status !== "trial") {
+        hotelObj.freeSubscription.status = "trial";
+        hotelObj.freeSubscription.plan = "free";
+        await hotelObj.save();
+      }
+
+      return res.json({
+        msg: "Free trial active",
+        freeSubscription: hotelObj.freeSubscription
+      });
+    }
+
+    // 🔹 CASE 2: START FREE TRIAL (FIRST TIME ONLY)
+    const start = new Date();
+
+    // End = 7th day midnight (IST-safe)
+    const end = new Date(start);
+    end.setUTCDate(end.getUTCDate() + 7);
+    end.setUTCHours(18, 30, 0, 0);
+
+    loginObj.freeSubscription = {
+      status: "trial",
+      plan: "free",
+      startDate: start,
+      endDate: end
+    };
+
+    await loginObj.save();
+
+    return res.json({
+      msg: "Free trial started",
+      freeSubscription: loginObj.freeSubscription
+    });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.getFreeTrialSubscription = async (req, res) => {
+  try {
+    const loginId = req.params.id
+    const loginObj = await authUser.findById(loginId);
+    if (!loginObj) return res.status(404).json({ msg: "user not found" });
+
+    const now = new Date();
+
+    const diff = new Date(loginObj.freeSubscription.endDate) - now;
+
+    res.json({
+      status: loginObj.freeSubscription.status,
+      plan: loginObj.freeSubscription.plan,
+      startDate: loginObj.freeSubscription.startDate,
+      endDate: loginObj.freeSubscription.endDate,
+      remainingMs: diff > 0 ? diff : 0
+    });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+

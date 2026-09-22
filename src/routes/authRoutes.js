@@ -69,4 +69,6 @@ router.get('/getReportUser/:id', userController.getReportUser);
 router.post('/deleteReportUser/:id', userController.deleteReportUser);
 router.post('/credUpload', userController.credUpload);
 router.get('/getCredUpload/:id', userController.getCredUpload);
+router.post("/app-open/:id",userController.onAppOpen);
+router.get("/free-trial/:id",userController.getFreeTrialSubscription);
 module.exports = router;
