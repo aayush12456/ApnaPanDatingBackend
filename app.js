@@ -287,6 +287,12 @@ socket.on("logoutUser", (userId) => {
     io.emit("onlineUsers", Array.from(onlineUsers.keys()));
 });
 
+socket.on('accessAmount',(message)=>{
+    io.emit('getAccessAmount',message)
+})
+socket.on('deleteAccessAmount',(message)=>{
+    io.emit('getAccessAmount',message)
+})
 
 });
 

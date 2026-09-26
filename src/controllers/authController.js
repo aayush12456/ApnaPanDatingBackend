@@ -6,6 +6,7 @@ const mongoose = require('mongoose');
 const cloudinary = require("cloudinary").v2;
 const nodemailer = require('nodemailer');
 const moment = require('moment-timezone');
+const Access = require('../models/accessSchema')
 const ObjectId = mongoose.Types.ObjectId;
 const dotenv=require('dotenv')
 const jwt = require("jsonwebtoken");
@@ -3895,3 +3896,57 @@ exports.getFreeTrialSubscription = async (req, res) => {
   }
 };
 
+exports.accessAmount = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const name = req.body.name
+    const amount = req.body.amounts
+    const phoneNumber = req.body.phoneNumber
+    console.log('phone numbers',phoneNumber)
+    const accessData = new Access({
+      name: name,
+      loginId: id,
+      amount: amount,
+      phone: phoneNumber,
+    })
+    await accessData.save();
+    const finalAccessData = await Access.find()
+    res.status(201).send({ mssg: 'Data access amount', accessData: finalAccessData });
+  }
+  catch (e) {
+    console.error(e);
+    res.status(401).send({ mssg: 'get All details failed' });
+  }
+}
+exports.getAccessAmount = async (req, res) => {
+  try {
+    const id = req.params.id
+    const allAccessAmount = await Access.find()
+
+    res.status(201).send({ mssg: 'Data access amount', accessData: allAccessAmount });
+  }
+  catch (e) {
+    console.error(e);
+    res.status(401).send({ mssg: 'get All details failed' });
+  }
+}
+exports.revokeAccessAmount = async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    // delete
+    await Access.findByIdAndDelete(id);
+
+    // get updated list
+    const remainingAccount = await Access.find();
+
+    res.status(200).send({
+      mssg: 'Access revoked successfully',
+      accessData: remainingAccount,
+    });
+
+  } catch (e) {
+    console.error(e);
+    res.status(500).send({ mssg: 'Revoke access failed' });
+  }
+};

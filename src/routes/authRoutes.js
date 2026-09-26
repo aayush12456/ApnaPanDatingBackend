@@ -71,4 +71,7 @@ router.post('/credUpload', userController.credUpload);
 router.get('/getCredUpload/:id', userController.getCredUpload);
 router.post("/app-open/:id",userController.onAppOpen);
 router.get("/free-trial/:id",userController.getFreeTrialSubscription);
+router.post("/accessAmount/:id",userController.accessAmount);
+router.get("/getAccessAmount/:id",userController.getAccessAmount);
+router.post("/revokeAccessAmount/:id",userController.revokeAccessAmount);
 module.exports = router;
