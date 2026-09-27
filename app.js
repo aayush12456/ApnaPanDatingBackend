@@ -21,6 +21,11 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.post(
+    "/user/webhook",
+    express.raw({ type: "application/json" }),
+    require("./src/controllers/authController").webhookHandler
+  );
 app.use(express.json({ limit: '80mb' }));
 app.use('/images', express.static(path.join(__dirname, 'public', 'uploads')));
 app.use('/public', express.static(path.join(__dirname, 'public')));

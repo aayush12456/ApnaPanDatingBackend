@@ -2,6 +2,8 @@ const bcrypt=require('bcrypt')
 const authUser=require('../models/authSchema')
 const notifyIdUser=require('../models/notifySchema')
 const credentialsApp=require('../models/credsSchema')
+const Subscription = require("../models/subscriptionSchema")
+const crypto = require("crypto");
 const mongoose = require('mongoose');
 const cloudinary = require("cloudinary").v2;
 const nodemailer = require('nodemailer');
@@ -12,6 +14,7 @@ const dotenv=require('dotenv')
 const jwt = require("jsonwebtoken");
 const uploadSongs=require('../models/songSchema')
 const reportUser=require('../models/reportSchema')
+const razorpay = require('../models/razorpay')
 dotenv.config()
 
 
@@ -3834,15 +3837,15 @@ exports.onAppOpen = async (req, res) => {
       }
 
       // 🟢 ACTIVE
-      if (hotelObj.freeSubscription.status !== "trial") {
-        hotelObj.freeSubscription.status = "trial";
-        hotelObj.freeSubscription.plan = "free";
-        await hotelObj.save();
+      if (loginObj.freeSubscription.status !== "trial") {
+        loginObj.freeSubscription.status = "trial";
+        loginObj.freeSubscription.plan = "free";
+        await loginObj.save();
       }
 
       return res.json({
         msg: "Free trial active",
-        freeSubscription: hotelObj.freeSubscription
+        freeSubscription: loginObj.freeSubscription
       });
     }
 
@@ -3948,5 +3951,289 @@ exports.revokeAccessAmount = async (req, res) => {
   } catch (e) {
     console.error(e);
     res.status(500).send({ mssg: 'Revoke access failed' });
+  }
+};
+exports.createSubscription = async (req, res) => {
+  try {
+    const { planId, amount } = req.body;
+    const loginId = req.params.id;
+
+    if (!planId) return res.status(400).json({ msg: "planId missing" });
+    const subscription = await razorpay.subscriptions.create({
+      plan_id: planId,
+      // total_count: 1,
+      total_count: 12,
+      customer_notify: 1,
+      notes: {
+        app: "apnapan",
+        loginId: loginId,
+        amount: amount
+      }
+    });
+    res.json({
+      msg: "Subscription created",
+      subscription
+    });
+
+  } catch (err) {
+    console.log(err);   // 🔥 error dikhega
+    res.status(500).json({ error: err.error?.description || err.message });
+  }
+};
+
+const sendAutoPayOffEmail = async ({ email, endDate }) => {
+  await transporter.sendMail({
+    to: email,
+    subject: "Auto-renewal turned off (Your plan is still active)",
+    html: `
+      <p>Hi,</p>
+
+      <p>Your auto-renewal has been turned off successfully.</p>
+
+      <p>Your subscription is still active till <b>${endDate.toDateString()}</b>.</p>
+
+      <p>No refund is applicable as the current billing cycle is already in progress.</p>
+
+      <p>You can renew anytime after expiry.</p>
+
+      <br/>
+      <p>Thanks</p>
+    `,
+  });
+};
+
+exports.webhookHandler = async (req, res) => {
+  try {
+    console.log("=================================");
+    console.log("🔥 RAZORPAY WEBHOOK HIT");
+    console.log("BODY BUFFER:", Buffer.isBuffer(req.body));
+    console.log(
+      "SIGNATURE:",
+      req.headers["x-razorpay-signature"]
+    );
+
+
+    const signature = req.headers["x-razorpay-signature"];
+
+    const expected = crypto
+      .createHmac("sha256", "MY_DATING")
+      // .createHmac("sha256", "MY_DATING_SECRET") // this live secret comes from webhook section in a dashboard and click on ngrok url then edit inside this secret is there
+      .update(req.body)
+      .digest("hex");
+
+    if (signature !== expected) {
+      return res.status(400).send("Invalid signature");
+    }
+
+    const event = JSON.parse(req.body.toString());
+    const now = new Date();
+    const s = event.payload?.subscription?.entity;
+
+    if (!s) return res.json({ status: "ok" });
+    if (s.notes?.app !== "apnapan") {
+      console.log("⚠️ Not ApnaPan subscription. Ignoring.");
+      return res.json({ status: "ok" });
+    }
+    /* ===============================
+       🟢 1. FIRST PAYMENT / ACTIVATION
+    =============================== */
+    if (event.event === "subscription.activated") {
+
+      const existing = await Subscription.findOne({
+        razorpaySubId: s.id,
+        startDate: new Date(s.current_start * 1000),
+      });
+
+      if (!existing) {
+        await Subscription.create({
+          loginId: s.notes?.loginId || null,
+          razorpaySubId: s.id,
+          planId: s.plan_id,
+          amount: s.notes?.amount || 0,
+          status: "active",
+          startDate: new Date(s.current_start * 1000),
+          endDate: new Date(s.current_end * 1000),
+        });
+      } else {
+        console.log("⚠️ Duplicate activation ignored");
+      }
+    }
+
+    /* ===============================
+       🔁 2. AUTOPAY SUCCESS
+    =============================== */
+    if (event.event === "subscription.charged") {
+
+      // old active expire
+      await Subscription.updateMany(
+        {
+          razorpaySubId: s.id,
+          status: "active",
+        },
+        {
+          status: "expired",
+        }
+      );
+
+      // new cycle create
+      await Subscription.create({
+        loginId: s.notes?.loginId || null,
+        razorpaySubId: s.id,
+        planId: s.plan_id,
+        amount: s.notes?.amount || 0,
+        status: "active",
+        startDate: new Date(s.current_start * 1000),
+        endDate: new Date(s.current_end * 1000),
+      });
+    }
+
+    /* ===============================
+       ❌ 3. AUTOPAY CANCEL
+    =============================== */
+    if (event.event === "subscription.cancelled") {
+      // const endDate = new Date(s.current_end * 1000);
+
+      // // only expire after actual end
+      // if (endDate <= now) {
+      //   await Subscription.updateMany(
+      //     {
+      //       razorpaySubId: s.id,
+      //       status: "active",
+      //     },
+      //     {
+      //       status: "cancelled",
+      //     }
+      //   );
+      // }
+      const sub = await Subscription.findOne({
+        razorpaySubId: s.id,
+        status: "active",
+      });
+
+      if (sub) {
+
+        // पहले DB operation
+        console.log("Subscription cancelled:", sub._id);
+    
+        // Email अलग से
+        try {
+          await sendAutoPayOffEmail({
+            email: s.notes?.email,
+            endDate: sub.endDate,
+          });
+        } catch (emailError) {
+          console.error("❌ Cancellation email failed:", emailError);
+        }
+      }
+    }
+
+    /* ===============================
+       ⚠️ 4. PAYMENT FAILED
+    =============================== */
+    if (event.event === "subscription.halted") {
+      const endDate = new Date(s.current_end * 1000);
+
+      if (endDate <= now) {
+        await Subscription.updateMany(
+          {
+            razorpaySubId: s.id,
+            status: "active",
+          },
+          {
+            status: "expired",
+          }
+        );
+      }
+    }
+
+    return res.json({ status: "ok" });
+
+  } catch (err) {
+    console.log("Webhook Error:", err);
+    return res.status(500).send("Webhook error");
+  }
+};
+
+exports.getExpiredSubscription = async (req, res) => {
+  try {
+    const loginId = req.params.id
+    //  console.log('hotelid',hotelId)
+    const allSubscription = await Subscription.find({ loginId: loginId, status: "expired" })
+    const formatDate = (date) => {
+      const d = new Date(date);
+      const day = d.getDate();
+      const month = d.toLocaleString("en-US", { month: "short" });
+      const year = d.getFullYear();
+      return `${day} ${month} ${year}`;
+    };
+    const formattedSubscriptions = allSubscription.map((sub) => ({
+      ...sub._doc,
+      startDate: formatDate(sub.startDate),
+      endDate: formatDate(sub.endDate),
+    }));
+
+    res.status(200).send({
+      msg: "all subscription",
+      subscriptionArray: formattedSubscriptions // ✅ ARRAY OF OBJECTS
+    });
+  } catch (err) {
+    console.log(err);   // 🔥 error dikhega
+    res.status(500).json({ error: err.message });
+  }
+}
+exports.getActiveSubscription = async (req, res) => {
+  try {
+    const loginId = req.params.id;
+
+    let activeSubscription = await Subscription.findOne({
+      loginId: loginId,
+      status: "active",
+    });
+
+    // ✅ No active subscription
+    if (!activeSubscription) {
+      return res.status(200).json({
+        msg: "No active subscription",
+        activeSubscription: null,
+      });
+    }
+
+    const now = new Date();
+    const endDate = new Date(activeSubscription.endDate);
+
+    // ✅ CORE LOGIC: expiry check
+    if (now > endDate) {
+      activeSubscription.status = "expired";
+      await activeSubscription.save();
+
+      return res.status(200).json({
+        msg: "Subscription expired",
+        activeSubscription: null,
+      });
+    }
+
+    // ✅ Date formatting (UI purpose only)
+    const formatDate = (date) => {
+      const d = new Date(date);
+      const day = d.getDate();
+      const month = d.toLocaleString("en-US", { month: "short" });
+      const year = d.getFullYear();
+      return `${day} ${month} ${year}`;
+    };
+
+    const formattedActiveSubscription = {
+      ...activeSubscription._doc,
+      startDate: formatDate(activeSubscription.startDate),
+      endDate: formatDate(activeSubscription.endDate),
+    };
+
+    return res.status(200).json({
+      msg: "Active subscription",
+      activeSubscription: formattedActiveSubscription,
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
   }
 };

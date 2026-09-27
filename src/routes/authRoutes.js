@@ -4,6 +4,9 @@ const multer = require('multer');
 const router = express.Router();
 const storage = multer.diskStorage({});
 const userController = require('../controllers/authController');
+const {
+  webhookHandler
+} = require("../controllers/authController");
 // Initialize multer middleware
 const upload = multer({
   storage: storage,
@@ -74,4 +77,8 @@ router.get("/free-trial/:id",userController.getFreeTrialSubscription);
 router.post("/accessAmount/:id",userController.accessAmount);
 router.get("/getAccessAmount/:id",userController.getAccessAmount);
 router.post("/revokeAccessAmount/:id",userController.revokeAccessAmount);
+router.post("/create/:id",userController.createSubscription);
+router.post("/webhook",webhookHandler);
+router.get('/getExpiredSubscription/:id',userController.getExpiredSubscription)
+router.get('/getActiveSubscription/:id',userController.getActiveSubscription)
 module.exports = router;
