@@ -713,7 +713,7 @@ exports.verifyOtp = async (req, res) => {
         dob: userDetails.DOB,
         appearanceMode: userDetails.appearanceMode,
         email:userDetails.email,
-        phone:userDetails.phone
+        phone:userDetails.phone,
       },
       token: token,
     
@@ -4235,5 +4235,32 @@ exports.getActiveSubscription = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
+  }
+};
+
+exports.deleteSubscription = async (req, res) => {
+  try {
+    const loginId = req.params.id;
+   console.log('logi id',loginId)
+    const deleteSubscribe = await Subscription.findOneAndDelete({
+      _id:loginId
+    });
+
+    console.log('delete subscibe ohg',deleteSubscribe)
+    if (!deleteSubscribe) {
+      return res.status(404).json({
+        mssg: "Document not found",
+      });
+    }
+
+    res.json({
+      mssg: " subscription deleted successfully",
+      deleteUser:deleteSubscribe,
+    });
+  } catch (e) {
+    console.log(e);
+    res.status(500).send({
+      mssg: "internal server error",
+    });
   }
 };

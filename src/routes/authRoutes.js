@@ -81,4 +81,5 @@ router.post("/create/:id",userController.createSubscription);
 router.post("/webhook",webhookHandler);
 router.get('/getExpiredSubscription/:id',userController.getExpiredSubscription)
 router.get('/getActiveSubscription/:id',userController.getActiveSubscription)
+router.post("/delete/:id",userController.deleteSubscription);
 module.exports = router;

@@ -2,6 +2,8 @@
 const express = require('express');
 const http = require('http');
 const db = require('./src/db/db');
+const startSubscriptionSyncJob = require("./src/services/subscribeExpiry");
+startSubscriptionSyncJob();
 const userRoutes = require('./src/routes/authRoutes');
 const chatRoutes=require('./src/routes/chatRoutes')
 const path = require('path');
