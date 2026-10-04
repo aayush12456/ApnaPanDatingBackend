@@ -9,9 +9,9 @@ const dotenv=require('dotenv')
 dotenv.config()
 const ObjectId = mongoose.Types.ObjectId;
 cloudinary.config({ 
-  cloud_name:process.env.CLOUD_NAME,
-  api_key:process.env.API_KEY,
-  api_secret:process.env.API_SECRET
+  cloud_name:process.env.CLOUD_NAME_CHAT,
+  api_key:process.env.API_KEY_CHAT,
+  api_secret:process.env.API_SECRET_CHAT
 });
 exports.addChat = async (req, res) => {
     try {
@@ -259,6 +259,8 @@ console.log('req file',req.file)
     }
     exports.getAllChatId = async (req, res) => {
       try {
+        const id=req.params.id
+        console.log('chat id',id)
      const AllChatIdArray=await chatIdUser.find()
      res.status(200).send({mssg:'all chats fetch succesfully',chatIdArray:AllChatIdArray
     })
@@ -488,5 +490,33 @@ console.log('req file',req.file)
         } catch (e) {
           console.error(e);
           res.status(500).send({ mssg: 'Failed to delete receiver ID' });
+        }
+      };
+
+
+      exports.deleteChatId = async (req, res) => {
+        try {
+          const id=req.params.id
+          const deleteChatId = await chatIdUser.deleteMany({});
+      
+          console.log("Deleted Chat id:", deleteChatId);
+      
+          if (deleteChatId.deletedCount === 0) {
+            return res.status(404).json({
+              mssg: "No documents found",
+            });
+          }
+      
+          res.json({
+            mssg: "All chat id deleted successfully",
+            deletedCount: deleteChatId.deletedCount,
+          });
+      
+        } catch (e) {
+          console.log(e);
+      
+          res.status(500).json({
+            mssg: "Internal server error",
+          });
         }
       };
