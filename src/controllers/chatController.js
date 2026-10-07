@@ -52,11 +52,11 @@ exports.addChat = async (req, res) => {
     try {
       const id = req.query.loginId;
       const anotherId = req.query.anotherId;
-      console.log('id in get chat',id)
-      console.log('another id in get chat',anotherId)
+      // console.log('id in get chat',id)
+      // console.log('another id in get chat',anotherId)
   
       const chatIdArray = await chatIdUser.find();
-      console.log('chat id array', chatIdArray);
+      // console.log('chat id array', chatIdArray);
   
       let found = false;
   
@@ -87,14 +87,14 @@ exports.addChat = async (req, res) => {
     try {
       const { id: loginId } = req.params;
       const { senderId, recieverId, message,senderName,images } = req.body;
-console.log('req file',req.file)
+// console.log('req file',req.file)
   if (req.file) {
 
       const result = await cloudinary.uploader.upload(req.file.path, {
         folder: "chatImages",
       });
       
-      console.log('result data',result)
+      // console.log('result data',result)
 
       if (!result || !result.secure_url) {
         throw new Error("Cloudinary image upload failed");
@@ -215,7 +215,7 @@ console.log('req file',req.file)
     try{
         const id=req.params.id
         const allChatArray=await ChatUser.find()
-        console.log('login chat data obj',allChatArray)
+        // console.log('login chat data obj',allChatArray)
         let filterChatArray
         filterChatArray=allChatArray.filter((item)=>item.loginId===id || item.recieverId===id)
         // let recieverChatArray
@@ -260,7 +260,7 @@ console.log('req file',req.file)
     exports.getAllChatId = async (req, res) => {
       try {
         const id=req.params.id
-        console.log('chat id',id)
+        // console.log('chat id',id)
      const AllChatIdArray=await chatIdUser.find()
      res.status(200).send({mssg:'all chats fetch succesfully',chatIdArray:AllChatIdArray
     })
@@ -310,7 +310,7 @@ console.log('req file',req.file)
       exports.deleteTyping = async (req, res) => {
         try {
             const { senderId, recieverId ,loginId} = req.body;
-           console.log('type of login id',typeof(loginId))
+          //  console.log('type of login id',typeof(loginId))
             // Ensure reciever exists
             const recieverObj = await authUser.findById(recieverId);
     
@@ -381,7 +381,7 @@ console.log('req file',req.file)
           });
     
         } else {
-          console.log("Receiver not found");
+          // console.log("Receiver not found");
     
           res.status(404).send({
             mssg: "Receiver not found",
@@ -499,7 +499,7 @@ console.log('req file',req.file)
           const id=req.params.id
           const deleteChatId = await chatIdUser.deleteMany({});
       
-          console.log("Deleted Chat id:", deleteChatId);
+          // console.log("Deleted Chat id:", deleteChatId);
       
           if (deleteChatId.deletedCount === 0) {
             return res.status(404).json({

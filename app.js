@@ -160,7 +160,7 @@ io.on('connection', (socket) => {
     })
   
     socket.on('addChatUsers', (chatUserObj) => {
-        console.log('Received addChatUsers:', chatUserObj);
+        // console.log('Received addChatUsers:', chatUserObj);
         // Avoid duplicate entries for same pair
         const exists = chatUsersArray.some(
             (item) => item.loginId === chatUserObj.loginId && item.anotherId === chatUserObj.anotherId
@@ -168,26 +168,26 @@ io.on('connection', (socket) => {
         if (!exists && chatUserObj.loginId && chatUserObj.anotherId) {
             chatUsersArray.push(chatUserObj);
         }
-        console.log('chatUsersArray now:', chatUsersArray);
+        // console.log('chatUsersArray now:', chatUsersArray);
         io.emit('getChatUsers', chatUsersArray);
     });
 
     // Remove loginId + anotherId from array (on back button)
     socket.on('deleteChatUsers', (chatUserObj) => {
-        console.log('Received deleteChatUsers:', chatUserObj);
+        // console.log('Received deleteChatUsers:', chatUserObj);
         const index = chatUsersArray.findIndex(
             (item) => item.loginId === chatUserObj.loginId && item.anotherId === chatUserObj.anotherId
         );
         if (index !== -1) {
             chatUsersArray.splice(index, 1);
         }
-        console.log('chatUsersArray after delete:', chatUsersArray);
+        // console.log('chatUsersArray after delete:', chatUsersArray);
         io.emit('getChatUsers', chatUsersArray);
     });
 
     // Current array maangne ke liye (race condition fix)
     socket.on('requestChatUsers', () => {
-        console.log('Sending current chatUsersArray to requester');
+        // console.log('Sending current chatUsersArray to requester');
         socket.emit('getChatUsers', chatUsersArray);  // sirf usi client ko
     });
 
@@ -215,25 +215,25 @@ io.on('connection', (socket) => {
     //     }
     //   });
     socket.on("callUser", (data) => {
-        console.log("========== callUser ==========");
-        console.log("Data:", data);
-        console.log("Current onlineUsers:", Array.from(onlineUsers.entries()));
+        // console.log("========== callUser ==========");
+        // console.log("Data:", data);
+        // console.log("Current onlineUsers:", Array.from(onlineUsers.entries()));
       
         const receiverId = data.receiverId?.toString();
         const receiverSocketId = onlineUsers.get(receiverId);
       
         if (receiverSocketId) {
-          console.log("✅ Receiver ONLINE hai. Socket ID:", receiverSocketId);
+        //   console.log("✅ Receiver ONLINE hai. Socket ID:", receiverSocketId);
           io.to(receiverSocketId).emit("incomingCall", data);
         } else {
-          console.log("❌ Receiver OFFLINE hai. ID:", receiverId);
+        //   console.log("❌ Receiver OFFLINE hai. ID:", receiverId);
           socket.emit("callFailed", { message: "User is offline" });
         }
-        console.log("==============================");
+        // console.log("==============================");
       });
       // Receiver Accept karta hai
       socket.on("acceptCall", (data) => {
-        console.log("acceptCall:", data);
+        // console.log("acceptCall:", data);
       
         const callerSocketId = onlineUsers.get(data.callerId?.toString());
         if (callerSocketId) {
@@ -243,7 +243,7 @@ io.on('connection', (socket) => {
       
       // Receiver Reject karta hai
       socket.on("rejectCall", (data) => {
-        console.log("rejectCall:", data);
+        // console.log("rejectCall:", data);
       
         const callerSocketId = onlineUsers.get(data.callerId?.toString());
         if (callerSocketId) {
@@ -253,7 +253,7 @@ io.on('connection', (socket) => {
       
       // Koi bhi End Call karta hai
       socket.on("endCall", (data) => {
-        console.log("endCall:", data);
+        // console.log("endCall:", data);
       
         const targetSocketId = onlineUsers.get(data.targetId?.toString());
         if (targetSocketId) {

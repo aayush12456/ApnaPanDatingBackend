@@ -393,7 +393,7 @@ exports.register = async (req, res) => {
       // Send notification email
       const info = await transporter.sendMail(mailOptions);
   
-      console.log("New Profile Email Sent:", info.messageId);
+      // console.log("New Profile Email Sent:", info.messageId);
     
         res.status(201).send({ mssg: 'Data registered Successfully',token: token,registerUser:User});
     } catch (e) {
@@ -457,7 +457,7 @@ exports.login = async (req, res) => {
 //     // Generate random 6-digit OTP
 //     const otp = Math.floor(10000 + Math.random() * 90000);
 
-//     console.log("Generated OTP:", otp);
+//     // console.log("Generated OTP:", otp);
 
 //     res.status(200).json({
 //       mssg: "Send OTP successfully",
@@ -3905,7 +3905,7 @@ exports.accessAmount = async (req, res) => {
     const name = req.body.name
     const amount = req.body.amounts
     const phoneNumber = req.body.phoneNumber
-    console.log('phone numbers',phoneNumber)
+    // console.log('phone numbers',phoneNumber)
     const accessData = new Access({
       name: name,
       loginId: id,
@@ -4004,20 +4004,20 @@ const sendAutoPayOffEmail = async ({ email, endDate }) => {
 
 exports.webhookHandler = async (req, res) => {
   try {
-    console.log("=================================");
-    console.log("🔥 RAZORPAY WEBHOOK HIT");
-    console.log("BODY BUFFER:", Buffer.isBuffer(req.body));
-    console.log(
-      "SIGNATURE:",
-      req.headers["x-razorpay-signature"]
-    );
+    // console.log("=================================");
+    // console.log("🔥 RAZORPAY WEBHOOK HIT");
+    // console.log("BODY BUFFER:", Buffer.isBuffer(req.body));
+    // console.log(
+    //   "SIGNATURE:",
+    //   req.headers["x-razorpay-signature"]
+    // );
 
 
     const signature = req.headers["x-razorpay-signature"];
 
     const expected = crypto
-      .createHmac("sha256", "MY_DATING")
-      // .createHmac("sha256", "MY_DATING_SECRET") // this live secret comes from webhook section in a dashboard and click on ngrok url then edit inside this secret is there
+      // .createHmac("sha256", "MY_DATING")
+      .createHmac("sha256", "MY_DATING_SECRET") // this live secret comes from webhook section in a dashboard and click on ngrok url then edit inside this secret is there
       .update(req.body)
       .digest("hex");
 
@@ -4031,7 +4031,7 @@ exports.webhookHandler = async (req, res) => {
 
     if (!s) return res.json({ status: "ok" });
     if (s.notes?.app !== "apnapan") {
-      console.log("⚠️ Not ApnaPan subscription. Ignoring.");
+      // console.log("⚠️ Not ApnaPan subscription. Ignoring.");
       return res.json({ status: "ok" });
     }
     /* ===============================
@@ -4113,7 +4113,7 @@ exports.webhookHandler = async (req, res) => {
       if (sub) {
 
         // पहले DB operation
-        console.log("Subscription cancelled:", sub._id);
+        // console.log("Subscription cancelled:", sub._id);
     
         // Email अलग से
         try {
